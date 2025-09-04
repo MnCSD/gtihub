@@ -13,8 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title:
-    "GitClone · Build and ship software on a single, collaborative platform",
+  title: "GitHub · Build and ship software on a single, collaborative platform",
   description:
     "Join the world's most widely adopted AI-powered developer platform.",
 };

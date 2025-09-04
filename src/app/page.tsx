@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -14,13 +15,15 @@ export default function Home() {
       <header className="sticky top-0 z-30 bg-transparent backdrop-blur">
         <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Left cluster: Brand + Nav */}
-          <div className="flex items-center gap-8 min-w-0">
+          <div className="flex items-center gap-6 min-w-0">
             {/* Brand */}
             <div className="flex items-center gap-3 shrink-0">
-              <div className="size-7 rounded-full bg-white"></div>
-              <span className="text-sm font-semibold tracking-wide">
-                GitClone
-              </span>
+              <Image
+                src="/github-mark-white.png"
+                alt="Logo"
+                width={30}
+                height={30}
+              />
             </div>
 
             {/* Nav */}
@@ -82,12 +85,12 @@ export default function Home() {
               </kbd>
             </div>
 
-            <button className="hidden sm:inline-flex rounded-md border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">
+            <Link href="/login" className="hidden sm:inline-flex rounded-md border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 cursor-pointer">
               Sign in
-            </button>
-            <button className="inline-flex rounded-md border border-white/50 px-3 py-1.5 text-sm font-semibold hover:bg-white/10">
+            </Link>
+            <Link href="/signup" className="inline-flex rounded-md border border-white/50 px-3 py-1.5 text-sm font-semibold hover:bg-white/10 cursor-pointer">
               Sign up
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -115,13 +118,13 @@ export default function Home() {
               placeholder="Enter your email"
               className="h-12 flex-1 rounded-lg bg-transparent px-4 text-base text-black placeholder:text-gray-600 focus:outline-none"
             />
-            <button className="h-12 ml-1 rounded-lg bg-[#238636] px-5 text-base font-semibold text-white ring-2 ring-white hover:bg-[#2ea043]">
+            <Link href="/signup" className="h-12 ml-1 rounded-lg bg-[#238636] px-5 text-base font-semibold text-white ring-2 ring-white hover:bg-[#2ea043] cursor-pointer inline-flex items-center justify-center">
               Sign up for GitHub
-            </button>
+            </Link>
           </div>
 
           {/* Secondary CTA */}
-          <button className="h-12 rounded-xl border-2 border-white px-5 text-base font-semibold text-white/90 hover:bg-white/10">
+          <button className="h-12 rounded-xl border-2 border-white px-5 text-base font-semibold text-white/90 hover:bg-white/10 cursor-pointer">
             Try GitHub Copilot
           </button>
         </div>
