@@ -1,6 +1,33 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+    setLoading(false);
+    if (res?.error) {
+      setError("Invalid email or password");
+    } else {
+      router.push("/");
+    }
+  }
   return (
     <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] flex flex-col">
       {/* Centered auth box */}
@@ -20,7 +47,7 @@ export default function LoginPage() {
             Sign in to GitHub
           </h1>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             {/* Username/email */}
             <div>
               <label className="block text-sm mb-1">
@@ -30,6 +57,8 @@ export default function LoginPage() {
                 type="text"
                 className="w-full h-10 rounded-md bg-[#0d1117] border border-[#30363d] px-3 text-sm text-white placeholder:text-[#8b949e] focus:outline-none focus:ring-2 focus:ring-[#58a6ff]"
                 placeholder=""
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -45,16 +74,23 @@ export default function LoginPage() {
                 type="password"
                 className="w-full h-10 rounded-md bg-[#0d1117] border border-[#30363d] px-3 text-sm text-white placeholder:text-[#8b949e] focus:outline-none focus:ring-2 focus:ring-[#58a6ff]"
                 placeholder=""
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
             {/* Sign in button */}
             <button
               type="submit"
-              className="w-full h-10 rounded-md bg-[#238636] hover:bg-[#2ea043] text-white font-semibold"
+              disabled={loading}
+              className="w-full h-10 rounded-md bg-[#238636] hover:bg-[#2ea043] text-white font-semibold disabled:opacity-60"
             >
-              Sign in
+              {loading ? "Signing in..." : "Sign in"}
             </button>
+
+            {error && (
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            )}
 
             {/* Divider */}
             <div className="flex items-center gap-4 text-[#6e7681]">
@@ -66,6 +102,7 @@ export default function LoginPage() {
             {/* Google */}
             <button
               type="button"
+              onClick={() => signIn("google")}
               className="w-full h-10 rounded-md bg-[#21262d] border border-[#30363d] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#2b3138]"
             >
               <GoogleIcon /> Continue with Google

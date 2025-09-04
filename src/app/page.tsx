@@ -1,7 +1,208 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import Navbar from "@/components/dashboard/navbar";
+import Sidebar from "@/components/dashboard/sidebar";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const user =
+    (session?.user as {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    } | null) ?? null;
+
+  if (user) {
+    const owner = (user?.name || user?.email || "you").split("@")[0];
+    return (
+      <main className="min-h-screen bg-[#010409] text-white">
+        <Navbar user={user} />
+
+        <div className="px-4 sm:px-6 lg:p-0 py-6 grid grid-cols-1 md:flex min-h-[calc(100vh-56px)]">
+          {/* Left sidebar */}
+          <div className="xl:col-span-3 h-full w-[340px]">
+            <Sidebar owner={owner} />
+          </div>
+
+          {/* Grouped center + right with width constraint */}
+          <div className="flex-1 max-w-[1540px] mx-auto w-full pt-18">
+            <div className="mx-auto max-w-[1230px] grid grid-cols-1 lg:grid-cols-3 gap-10">
+              {/* Center feed */}
+              <section className="lg:col-span-2 space-y-4">
+                <h1 className="text-2xl font-semibold">Home</h1>
+                <div className="rounded-lg border border-white/10 bg-[#0d1117] p-3 py-1 flex items-center gap-2">
+                  <input
+                    className="flex-1 bg-transparent placeholder:text-white/50 focus:outline-none text-sm"
+                    placeholder="Ask Copilot"
+                  />
+                  <button className="rounded  px-3 py-1.5 text-sm">▶</button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Create a profile README for me",
+                    "Create an issue for a bug",
+                    "Get code feedback",
+                  ].map((a) => (
+                    <button
+                      key={a}
+                      className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10"
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0d1117]">
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="text-sm text-white/80">
+                      Trending repositories
+                    </div>
+                    <button className="text-xs text-white/60 hover:text-white">
+                      See more
+                    </button>
+                  </div>
+                  <ul className="p-3 px-0 space-y-3">
+                    {[
+                      {
+                        name: "agentscope-ai/agentscope",
+                        desc: "AgentScope: Agent-Oriented Programming for Building LLM Applications",
+                        lang: "Python",
+                        stars: "8.9k",
+                      },
+                      {
+                        name: "LuckyOne7777/ChatGPT-Micro-Cap-Experiment",
+                        desc: "This repo powers my blog experiment where ChatGPT manages a real-money micro-cap stock portfolio.",
+                        lang: "Python",
+                        stars: "5.1k",
+                      },
+                    ].map((item, index) => (
+                      <li
+                        key={item.name}
+                        className={`rounded ${
+                          //if its last no border bottom
+                          index === 1 ? "" : "border-b border-white/10"
+                        } p-3`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium">{item.name}</div>
+                          <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
+                            ★ Star
+                          </button>
+                        </div>
+                        <p className="mt-1 text-sm text-white/70">
+                          {item.desc}
+                        </p>
+                        <div className="mt-2 text-xs text-white/50">
+                          {item.lang} • {item.stars}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#0d1117]">
+                  <div className="px-4 py-3  text-sm text-white/80">
+                    Recommended for you
+                  </div>
+                  <ul className="p-3 px-0 space-y-3">
+                    {[
+                      {
+                        name: "yangshun/front-end-interview-handbook",
+                        desc: "Front End interview preparation materials for busy engineers (updated for 2025)",
+                        lang: "MDX",
+                        stars: "43.5k",
+                      },
+                    ].map((item) => (
+                      <li key={item.name} className="rounded p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium">{item.name}</div>
+                          <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
+                            ★ Star
+                          </button>
+                        </div>
+                        <p className="mt-1 text-sm text-white/70">
+                          {item.desc}
+                        </p>
+                        <div className="mt-2 text-xs text-white/50">
+                          {item.lang} • {item.stars}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+
+              {/* Right sidebar */}
+              <aside className="lg:col-span-1 space-y-4">
+                <div className="rounded-lg border border-white/10 bg-[#010409] p-3">
+                  <h3 className="text-sm font-semibold text-white/90">
+                    Latest changes
+                  </h3>
+                  <ul className="mt-2 space-y-2 text-sm text-white/70">
+                    {[
+                      "Improved file navigation and editing in the web UI",
+                      "Manage Copilot and users via Enterprise Teams in public preview",
+                      "Remote GitHub MCP Server is now generally available",
+                    ].map((t, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-1 size-1.5 rounded-full bg-white/40" />
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-[#010409] p-3">
+                  <h3 className="text-sm font-semibold text-white/90">
+                    Explore repositories
+                  </h3>
+                  <ul className="mt-2 space-y-2">
+                    {[
+                      {
+                        name: "jhlywa / chess.js",
+                        lang: "TypeScript",
+                        stars: "4.1k",
+                      },
+                      {
+                        name: "official-stockfish / fishtest",
+                        lang: "Python",
+                        stars: "311",
+                      },
+                      {
+                        name: "excaliburjs / Excalibur",
+                        lang: "TypeScript",
+                        stars: "2.1k",
+                      },
+                    ].map((r) => (
+                      <li
+                        key={r.name}
+                        className="rounded border border-white/10 p-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm">{r.name}</div>
+                          <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
+                            ★ Star
+                          </button>
+                        </div>
+                        <div className="mt-1 text-xs text-white/50">
+                          {r.stars} • {r.lang}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Logged-out landing page (original hero)
   return (
     <main className="h-screen relative overflow-hidden bg-[#0C0F41] text-white">
       {/* Top gradient + subtle stars */}
@@ -85,10 +286,16 @@ export default function Home() {
               </kbd>
             </div>
 
-            <Link href="/login" className="hidden sm:inline-flex rounded-md border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 cursor-pointer">
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex rounded-md border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 cursor-pointer"
+            >
               Sign in
             </Link>
-            <Link href="/signup" className="inline-flex rounded-md border border-white/50 px-3 py-1.5 text-sm font-semibold hover:bg-white/10 cursor-pointer">
+            <Link
+              href="/signup"
+              className="inline-flex rounded-md border border-white/50 px-3 py-1.5 text-sm font-semibold hover:bg-white/10 cursor-pointer"
+            >
               Sign up
             </Link>
           </div>
@@ -106,30 +313,30 @@ export default function Home() {
         </h1>
 
         <p className="mt-6 text-lg sm:text-xl text-white/80">
-          Join the world’s most widely adopted AI-powered developer platform.
+          Join the world&apos;s most widely adopted AI-powered developer
+          platform.
         </p>
 
-        {/* Signup form */}
         <div className="mx-auto relative z-[10000] mt-8 flex max-w-3xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          {/* Composite field: input with embedded signup button */}
           <div className="flex w-[60%] items-center rounded-xl bg-gradient-to-b from-white to-white/90 p-1 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]">
             <input
               type="email"
               placeholder="Enter your email"
               className="h-12 flex-1 rounded-lg bg-transparent px-4 text-base text-black placeholder:text-gray-600 focus:outline-none"
             />
-            <Link href="/signup" className="h-12 ml-1 rounded-lg bg-[#238636] px-5 text-base font-semibold text-white ring-2 ring-white hover:bg-[#2ea043] cursor-pointer inline-flex items-center justify-center">
+            <Link
+              href="/signup"
+              className="h-12 ml-1 rounded-lg bg-[#238636] px-5 text-base font-semibold text-white ring-2 ring-white hover:bg-[#2ea043] cursor-pointer inline-flex items-center justify-center"
+            >
               Sign up for GitHub
             </Link>
           </div>
 
-          {/* Secondary CTA */}
           <button className="h-12 rounded-xl border-2 border-white px-5 text-base font-semibold text-white/90 hover:bg-white/10 cursor-pointer">
             Try GitHub Copilot
           </button>
         </div>
 
-        {/* Floating icons + gradient image pinned to bottom */}
         <div className="pointer-events-none absolute inset-x-0 -bottom-[1200px] sm:-bottom-16 md:-bottom-32 flex justify-center animate-float-slow">
           <div className="relative w-full max-w-[1600px] h-[520px] sm:h-[660px] md:h-[800px] lg:h-[920px]">
             <Image

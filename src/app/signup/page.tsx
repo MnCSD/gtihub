@@ -1,6 +1,38 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export default function SignupPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Signup failed");
+      await signIn("credentials", { email, password, redirect: true, callbackUrl: "/" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white text-[#0d1117]">
       {/* Two column layout */}
@@ -13,10 +45,10 @@ export default function SignupPage() {
               Create your free account
             </h1>
             <p className="mt-3 text-white/80 max-w-xl">
-              Explore GitHub’s core features for individuals and organizations.
+              Explore GitHub&apos;s core features for individuals and organizations.
             </p>
             <button className="mt-6 inline-flex items-center gap-2 text-white font-medium">
-              See what’s included
+              See what&apos;s included
               <svg
                 viewBox="0 0 20 20"
                 className="size-4"
@@ -37,30 +69,22 @@ export default function SignupPage() {
           {/* extra spark particles rising */}
           <div aria-hidden className="absolute inset-0 z-10 pointer-events-none">
             {Array.from({ length: 36 }).map((_, i) => {
-              // Pseudo-random placement using deterministic math
-              const left = (i * 37) % 100; // 0..99%
-              const bottomPct = 8 + ((i * 13) % 28); // start 8%..36% from bottom (not a single line)
-              const delay = (i % 12) * 0.45; // staggered
-              const duration = 5.5 + ((i * 7) % 10) * 0.25; // 5.5s..8s
-              const size = 2 + (i % 3); // 2-4px
-              const rise = 100 + ((i * 11) % 80); // 100..180px variable rise
-              return (
-                <span
-                  key={i}
-                  className="sparkle absolute"
-                  style={{
-                    left: `${left}%`,
-                    bottom: `${bottomPct}%`,
-                    animationDelay: `${delay}s`,
-                    animationDuration: `${duration}s`,
-                    width: `${size}px`,
-                    height: `${size}px`,
-                    // custom properties consumed by keyframes
-                    // @ts-ignore - CSS variable inline
-                    ['--spark-rise' as any]: `${rise}px`,
-                  } as React.CSSProperties}
-                />
-              );
+              const left = (i * 37) % 100;
+              const bottomPct = 8 + ((i * 13) % 28);
+              const delay = (i % 12) * 0.45;
+              const duration = 5.5 + ((i * 7) % 10) * 0.25;
+              const size = 2 + (i % 3);
+              const rise = 100 + ((i * 11) % 80);
+              const style: React.CSSProperties & Record<'--spark-rise', string> = {
+                left: `${left}%`,
+                bottom: `${bottomPct}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+                width: `${size}px`,
+                height: `${size}px`,
+                ['--spark-rise']: `${rise}px`,
+              };
+              return <span key={i} className="sparkle absolute" style={style} />;
             })}
           </div>
 
@@ -82,9 +106,9 @@ export default function SignupPage() {
           {/* Mini header sits only on the right panel */}
           <div className="absolute right-4 sm:right-6 lg:right-10 top-4 text-sm">
             <span className="text-black/70">Already have an account?</span>
-            <a href="#" className="ml-2 font-semibold text-black hover:underline inline-flex items-center gap-1">
-              Sign in <span aria-hidden>→</span>
-            </a>
+            <Link href="/login" className="ml-2 font-semibold text-black hover:underline inline-flex items-center gap-1">
+              Sign in <span aria-hidden> →</span>
+            </Link>
           </div>
 
           <div className="w-full max-w-md">
@@ -102,19 +126,22 @@ export default function SignupPage() {
               <div className="h-px flex-1 bg-black/10" />
             </div>
 
-            <form className="space-y-4">
-              <Field label="Email" type="email" placeholder="Email" />
+            <form className="space-y-4" onSubmit={onSubmit}>
+              <Field label="Email" type="email" placeholder="Email" value={email} onChange={setEmail} />
               <Field
                 label="Password"
                 type="password"
                 placeholder="Password"
-                help="Password should be at least 15 characters OR at least 8 characters including a number and a lowercase letter."
+                value={password}
+                onChange={setPassword}
+                help="Password should be at least 8 characters including a number and a lowercase letter."
               />
               <Field
-                label="Username"
+                label="Name"
                 type="text"
-                placeholder="Username"
-                help="Username may only contain alphanumeric characters or single hyphens, and cannot begin or end with a hyphen."
+                placeholder="Your name"
+                value={name}
+                onChange={setName}
               />
 
               {/* Country/Region */}
@@ -143,7 +170,7 @@ export default function SignupPage() {
                   </svg>
                 </div>
                 <p className="mt-1.5 text-xs text-black/60">
-                  For compliance reasons, we’re required to collect country information to send you occasional updates and announcements.
+                  For compliance reasons, we&apos;re required to collect country information to send you occasional updates and announcements.
                 </p>
               </div>
 
@@ -155,14 +182,17 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="mt-2 w-full h-11 rounded-md bg-black text-white font-semibold hover:bg-black/90"
+                disabled={loading}
+                className="mt-2 w-full h-11 rounded-md bg-black text-white font-semibold hover:bg-black/90 disabled:opacity-60"
               >
-                Create account
+                {loading ? "Creating..." : "Create account"}
                 <span aria-hidden> →</span>
               </button>
 
+              {error && <p className="text-sm text-red-600">{error}</p>}
+
               <p className="text-xs text-black/60 leading-relaxed mt-3">
-                By creating an account, you agree to the Terms of Service. For more information about GitHub’s privacy practices, see the GitHub Privacy Statement.
+                By creating an account, you agree to the Terms of Service. For more information about GitHub&apos;s privacy practices, see the GitHub Privacy Statement.
               </p>
             </form>
           </div>
@@ -177,11 +207,15 @@ function Field({
   type,
   placeholder,
   help,
+  value,
+  onChange,
 }: {
   label: string;
   type: string;
   placeholder: string;
   help?: string;
+  value?: string;
+  onChange?: (v: string) => void;
 }) {
   return (
     <div>
@@ -193,6 +227,8 @@ function Field({
         type={type}
         placeholder={placeholder}
         className="w-full h-11 rounded-md border border-black/10 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
       />
       {help && <p className="mt-1.5 text-xs text-black/60">{help}</p>}
     </div>
