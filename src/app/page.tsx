@@ -11,7 +11,7 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0C0F41]/60 backdrop-blur">
+      <header className="sticky top-0 z-30 bg-transparent backdrop-blur">
         <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Left cluster: Brand + Nav */}
           <div className="flex items-center gap-8 min-w-0">
@@ -61,7 +61,7 @@ export default function Home() {
 
           {/* Right cluster: Search + Auth */}
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 w-[420px] rounded-md border border-white/15 bg-white/5 px-3 py-1.5">
+            <div className="hidden lg:flex items-center bg-[#272E49] gap-2 w-[420px] rounded-md border border-white/15 px-3 py-1.5">
               <svg
                 aria-hidden
                 className="size-4 text-white/60"
@@ -93,8 +93,8 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)] pt-8 lg:pt-14 pb-72 text-center">
-        <h1 className="mx-auto max-w-5xl text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight tracking-tight">
+      <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)] pt-8 lg:pt-28 pb-72 text-center">
+        <h1 className="mx-auto max-w-5xl text-4xl sm:text-5xl lg:text-[60px] font-extrabold leading-tight tracking-tight">
           Build and ship software on a
           <br className="hidden sm:block" />
           <span className="whitespace-nowrap">
@@ -107,7 +107,7 @@ export default function Home() {
         </p>
 
         {/* Signup form */}
-        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+        <div className="mx-auto relative z-[10000] mt-8 flex max-w-3xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           {/* Composite field: input with embedded signup button */}
           <div className="flex w-[60%] items-center rounded-xl bg-gradient-to-b from-white to-white/90 p-1 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]">
             <input
