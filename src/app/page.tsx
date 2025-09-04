@@ -2,102 +2,144 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="h-screen relative overflow-hidden bg-[#0C0F41] text-white">
+      {/* Top gradient + subtle stars */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_50%_-200px,rgba(99,102,241,0.25),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(900px_500px_at_50%_90%,rgba(168,85,247,0.35),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(700px_400px_at_20%_20%,rgba(59,130,246,0.15),transparent_60%)]" />
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0C0F41]/60 backdrop-blur">
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Left cluster: Brand + Nav */}
+          <div className="flex items-center gap-8 min-w-0">
+            {/* Brand */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="size-7 rounded-full bg-white"></div>
+              <span className="text-sm font-semibold tracking-wide">
+                GitClone
+              </span>
+            </div>
+
+            {/* Nav */}
+            <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
+              {[
+                "Platform",
+                "Solutions",
+                "Resources",
+                "Open Source",
+                "Enterprise",
+                "Pricing",
+              ].map((item) => (
+                <button
+                  key={item}
+                  className="inline-flex items-center gap-1 hover:text-white transition-colors"
+                >
+                  <span>{item}</span>
+                  {item !== "Pricing" && (
+                    <svg
+                      aria-hidden
+                      className="size-3.5 opacity-70"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M5.25 7.75L10 12.5l4.75-4.75"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        fill="none"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Right cluster: Search + Auth */}
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2 w-[420px] rounded-md border border-white/15 bg-white/5 px-3 py-1.5">
+              <svg
+                aria-hidden
+                className="size-4 text-white/60"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                className="flex-1 bg-transparent text-sm placeholder:text-white/50 focus:outline-none"
+                placeholder="Search or jump to..."
+              />
+              <kbd className="rounded border border-white/20 px-1.5 py-0.5 text-[10px] text-white/70">
+                /
+              </kbd>
+            </div>
+
+            <button className="hidden sm:inline-flex rounded-md border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">
+              Sign in
+            </button>
+            <button className="inline-flex rounded-md border border-white/50 px-3 py-1.5 text-sm font-semibold hover:bg-white/10">
+              Sign up
+            </button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </header>
+
+      {/* Hero */}
+      <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)] pt-8 lg:pt-14 pb-72 text-center">
+        <h1 className="mx-auto max-w-5xl text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight tracking-tight">
+          Build and ship software on a
+          <br className="hidden sm:block" />
+          <span className="whitespace-nowrap">
+            single, collaborative platform
+          </span>
+        </h1>
+
+        <p className="mt-6 text-lg sm:text-xl text-white/80">
+          Join the world’s most widely adopted AI-powered developer platform.
+        </p>
+
+        {/* Signup form */}
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          {/* Composite field: input with embedded signup button */}
+          <div className="flex w-[60%] items-center rounded-xl bg-gradient-to-b from-white to-white/90 p-1 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="h-12 flex-1 rounded-lg bg-transparent px-4 text-base text-black placeholder:text-gray-600 focus:outline-none"
+            />
+            <button className="h-12 ml-1 rounded-lg bg-[#238636] px-5 text-base font-semibold text-white ring-2 ring-white hover:bg-[#2ea043]">
+              Sign up for GitHub
+            </button>
+          </div>
+
+          {/* Secondary CTA */}
+          <button className="h-12 rounded-xl border-2 border-white px-5 text-base font-semibold text-white/90 hover:bg-white/10">
+            Try GitHub Copilot
+          </button>
+        </div>
+
+        {/* Floating icons + gradient image pinned to bottom */}
+        <div className="pointer-events-none absolute inset-x-0 -bottom-[1200px] sm:-bottom-16 md:-bottom-32 flex justify-center animate-float-slow">
+          <div className="relative w-full max-w-[1600px] h-[520px] sm:h-[660px] md:h-[800px] lg:h-[920px]">
+            <Image
+              src="/floating_icons_gradient.png"
+              alt="Floating icons with glow gradient"
+              fill
+              priority
+              sizes="100vw"
+              className="object-contain select-none"
+            />
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
