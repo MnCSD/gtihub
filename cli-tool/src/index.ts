@@ -22,7 +22,7 @@ testing and development
 
 'gith help <command>' to read about a specific subcommand.
 See 'gith --version' for version information.`;
-    }
+    },
   });
 
 // Register commands
@@ -35,7 +35,10 @@ program.exitOverride((err) => {
       chalk.red(`Error: Unknown command '${err.message.split("'")[1]}'`)
     );
     console.log(chalk.yellow("Run 'gith --help' for available commands"));
-  } else if (err.code === "commander.helpDisplayed" || err.code === "commander.version") {
+  } else if (
+    err.code === "commander.helpDisplayed" ||
+    err.code === "commander.version"
+  ) {
     // Don't show error for help display or version
     process.exit(0);
   } else {
