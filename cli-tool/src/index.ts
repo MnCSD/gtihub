@@ -3,6 +3,8 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { helloCommand } from "./commands/hello";
+import { initCommand } from "./commands/init";
+import { addCommand } from "./commands/add";
 
 const program = new Command();
 
@@ -17,6 +19,12 @@ program
 
 These are common Gith commands used in various situations:
 
+start a working area
+   init       Create an empty Gith repository or reinitialize an existing one
+
+work on the current change
+   add        Add file contents to the index
+
 testing and development
    hello      Print Hello World
 
@@ -27,6 +35,8 @@ See 'gith --version' for version information.`;
 
 // Register commands
 program.addCommand(helloCommand);
+program.addCommand(initCommand);
+program.addCommand(addCommand);
 
 // Global error handler
 program.exitOverride((err) => {

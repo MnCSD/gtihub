@@ -7,6 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
 const chalk_1 = __importDefault(require("chalk"));
 const hello_1 = require("./commands/hello");
+const init_1 = require("./commands/init");
+const add_1 = require("./commands/add");
 const program = new commander_1.Command();
 program
     .name("gith")
@@ -19,22 +21,31 @@ program
 
 These are common Gith commands used in various situations:
 
+start a working area
+   init       Create an empty Gith repository or reinitialize an existing one
+
+work on the current change
+   add        Add file contents to the index
+
 testing and development
    hello      Print Hello World
 
 'gith help <command>' to read about a specific subcommand.
 See 'gith --version' for version information.`;
-    }
+    },
 });
 // Register commands
 program.addCommand(hello_1.helloCommand);
+program.addCommand(init_1.initCommand);
+program.addCommand(add_1.addCommand);
 // Global error handler
 program.exitOverride((err) => {
     if (err.code === "commander.unknownCommand") {
         console.error(chalk_1.default.red(`Error: Unknown command '${err.message.split("'")[1]}'`));
         console.log(chalk_1.default.yellow("Run 'gith --help' for available commands"));
     }
-    else if (err.code === "commander.helpDisplayed" || err.code === "commander.version") {
+    else if (err.code === "commander.helpDisplayed" ||
+        err.code === "commander.version") {
         // Don't show error for help display or version
         process.exit(0);
     }
