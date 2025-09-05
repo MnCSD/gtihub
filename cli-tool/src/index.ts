@@ -6,6 +6,10 @@ import { helloCommand } from "./commands/hello";
 import { initCommand } from "./commands/init";
 import { addCommand } from "./commands/add";
 import { statusCommand } from "./commands/status";
+import { commitCommand } from "./commands/commit";
+import { pushCommand } from "./commands/push";
+import { configCommand } from "./commands/config";
+import { logCommand } from "./commands/log";
 
 const program = new Command();
 
@@ -28,6 +32,16 @@ work on the current change
 
 examine the history and state
    status     Show the working tree status
+   log        Show commit logs
+
+grow, mark and tweak your common history
+   commit     Record changes to the repository
+
+collaborate
+   push       Update remote refs along with associated objects
+
+setup and config
+   config     Get and set repository or global options
 
 testing and development
    hello      Print Hello World
@@ -42,6 +56,10 @@ program.addCommand(helloCommand);
 program.addCommand(initCommand);
 program.addCommand(addCommand);
 program.addCommand(statusCommand);
+program.addCommand(commitCommand);
+program.addCommand(pushCommand);
+program.addCommand(configCommand);
+program.addCommand(logCommand);
 
 // Global error handler
 program.exitOverride((err) => {

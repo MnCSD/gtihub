@@ -21,6 +21,7 @@ model User {
 
   accounts      Account[]
   sessions      Session[]
+  repositories  Repository[]
 }
 
 model Account {
@@ -58,5 +59,69 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@unique([token])
+}
+
+// Git Repository Models
+model Repository {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  commits  Commit[]
+  branches Branch[]
+
+  @@unique([ownerId, name])
+}
+
+model Commit {
+  id           String   @id @default(cuid())
+  sha          String   @unique
+  message      String
+  authorName   String
+  authorEmail  String
+  committerName String
+  committerEmail String
+  timestamp    DateTime
+  treeHash     String
+  parentSha    String?
+  repositoryId String
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  parent     Commit?    @relation("CommitParent", fields: [parentSha], references: [sha])
+  children   Commit[]   @relation("CommitParent")
+  files      CommitFile[]
+}
+
+model CommitFile {
+  id       String @id @default(cuid())
+  commitId String
+  path     String
+  content  String @db.Text
+  hash     String
+  mode     String @default("100644")
+  action   String // "added", "modified", "deleted"
+
+  commit Commit @relation(fields: [commitId], references: [id], onDelete: Cascade)
+
+  @@unique([commitId, path])
+}
+
+model Branch {
+  id           String @id @default(cuid())
+  name         String
+  repositoryId String
+  commitSha    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, name])
 }
 

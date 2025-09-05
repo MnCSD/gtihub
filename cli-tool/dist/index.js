@@ -10,6 +10,10 @@ const hello_1 = require("./commands/hello");
 const init_1 = require("./commands/init");
 const add_1 = require("./commands/add");
 const status_1 = require("./commands/status");
+const commit_1 = require("./commands/commit");
+const push_1 = require("./commands/push");
+const config_1 = require("./commands/config");
+const log_1 = require("./commands/log");
 const program = new commander_1.Command();
 program
     .name("gith")
@@ -30,6 +34,16 @@ work on the current change
 
 examine the history and state
    status     Show the working tree status
+   log        Show commit logs
+
+grow, mark and tweak your common history
+   commit     Record changes to the repository
+
+collaborate
+   push       Update remote refs along with associated objects
+
+setup and config
+   config     Get and set repository or global options
 
 testing and development
    hello      Print Hello World
@@ -43,6 +57,10 @@ program.addCommand(hello_1.helloCommand);
 program.addCommand(init_1.initCommand);
 program.addCommand(add_1.addCommand);
 program.addCommand(status_1.statusCommand);
+program.addCommand(commit_1.commitCommand);
+program.addCommand(push_1.pushCommand);
+program.addCommand(config_1.configCommand);
+program.addCommand(log_1.logCommand);
 // Global error handler
 program.exitOverride((err) => {
     if (err.code === "commander.unknownCommand") {
