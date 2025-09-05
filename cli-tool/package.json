@@ -1,0 +1,32 @@
+{
+  "name": "gith-cli",
+  "version": "1.0.0",
+  "description": "Custom Git CLI for GitHub clone application",
+  "main": "dist/index.js",
+  "bin": {
+    "gith": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublish": "npm run build"
+  },
+  "keywords": ["git", "cli", "version-control"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6",
+    "crypto": "^1.0.1",
+    "fs-extra": "^11.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/inquirer": "^8.2.10",
+    "@types/fs-extra": "^11.0.4",
+    "typescript": "^5.0.0"
+  }
+}

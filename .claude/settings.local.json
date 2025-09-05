@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\Users\\MariosNikolopoulos\\Documents\\builds\\gtihub/**)",
+      "Read(/C:\\Users\\MariosNikolopoulos\\Documents\\builds\\gtihub/**)",
+      "Read(/C:\\Users\\MariosNikolopoulos\\Documents\\builds\\gtihub\\src\\app/**)",
+      "WebSearch",
+      "Bash(node:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm link:*)",
+      "Bash(gith hello)",
+      "Bash(gith --help)",
+      "Bash(gith)",
+      "Bash(gith -v)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

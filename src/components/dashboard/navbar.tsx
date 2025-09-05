@@ -1,4 +1,5 @@
 import Image from "next/image";
+import UserMenu from "@/components/dashboard/user-menu";
 
 type NavUser = {
   name?: string | null;
@@ -50,19 +51,7 @@ export default function Navbar({ user }: { user: NavUser }) {
               placeholder="Type / to search"
             />
           </div>
-          {user?.image ? (
-            <Image
-              src={user.image}
-              alt={user.name || user.email || "User"}
-              width={28}
-              height={28}
-              className="rounded-full border border-white/20"
-            />
-          ) : (
-            <div className="size-8 rounded-full bg-white/10 text-white flex items-center justify-center font-semibold">
-              {initial}
-            </div>
-          )}
+          <UserMenu user={user} />
         </div>
       </div>
     </header>
