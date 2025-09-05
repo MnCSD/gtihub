@@ -14,6 +14,7 @@ const commit_1 = require("./commands/commit");
 const push_1 = require("./commands/push");
 const config_1 = require("./commands/config");
 const log_1 = require("./commands/log");
+const clone_1 = require("./commands/clone");
 const program = new commander_1.Command();
 program
     .name("gith")
@@ -27,6 +28,7 @@ program
 These are common Gith commands used in various situations:
 
 start a working area
+   clone      Clone a repository into a new directory
    init       Create an empty Gith repository or reinitialize an existing one
 
 work on the current change
@@ -61,6 +63,7 @@ program.addCommand(commit_1.commitCommand);
 program.addCommand(push_1.pushCommand);
 program.addCommand(config_1.configCommand);
 program.addCommand(log_1.logCommand);
+program.addCommand(clone_1.cloneCommand);
 // Global error handler
 program.exitOverride((err) => {
     if (err.code === "commander.unknownCommand") {

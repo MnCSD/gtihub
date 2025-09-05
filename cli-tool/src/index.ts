@@ -10,6 +10,7 @@ import { commitCommand } from "./commands/commit";
 import { pushCommand } from "./commands/push";
 import { configCommand } from "./commands/config";
 import { logCommand } from "./commands/log";
+import { cloneCommand } from "./commands/clone";
 
 const program = new Command();
 
@@ -25,6 +26,7 @@ program
 These are common Gith commands used in various situations:
 
 start a working area
+   clone      Clone a repository into a new directory
    init       Create an empty Gith repository or reinitialize an existing one
 
 work on the current change
@@ -60,6 +62,7 @@ program.addCommand(commitCommand);
 program.addCommand(pushCommand);
 program.addCommand(configCommand);
 program.addCommand(logCommand);
+program.addCommand(cloneCommand);
 
 // Global error handler
 program.exitOverride((err) => {
