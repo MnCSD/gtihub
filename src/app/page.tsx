@@ -23,7 +23,7 @@ export default async function Home() {
         <div className="px-4 sm:px-6 lg:p-0 py-6 grid grid-cols-1 md:flex min-h-[calc(100vh-56px)]">
           {/* Left sidebar */}
           <div className="xl:col-span-3 h-full w-[340px]">
-            <Sidebar owner={owner} />
+            <Sidebar owner={owner} ownerImage={user?.image || null} />
           </div>
 
           {/* Grouped center + right with width constraint */}
@@ -57,14 +57,29 @@ export default async function Home() {
 
                 <div className="rounded-lg border border-white/10 bg-[#0d1117]">
                   <div className="flex items-center justify-between px-4 py-3">
-                    <div className="text-sm text-white/80">
-                      Trending repositories
+                    <div className="text-sm text-white/60">
+                      <div className="inline-flex items-center gap-2">
+                        <span>
+                          <svg
+                            aria-hidden="true"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            version="1.1"
+                            width="16"
+                            data-view-component="true"
+                            fill="currentColor"
+                          >
+                            <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"></path>
+                          </svg>
+                        </span>
+                        <span> Trending repositories</span>
+                      </div>
                     </div>
                     <button className="text-xs text-white/60 hover:text-white">
                       See more
                     </button>
                   </div>
-                  <ul className="p-3 px-0 space-y-3">
+                  <ul className="p-3 pt-0 px-0 space-y-3">
                     {[
                       {
                         name: "agentscope-ai/agentscope",
@@ -87,12 +102,12 @@ export default async function Home() {
                         } p-3`}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="font-medium">{item.name}</div>
+                          <div className="font-medium text-sm">{item.name}</div>
                           <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
                             ★ Star
                           </button>
                         </div>
-                        <p className="mt-1 text-sm text-white/70">
+                        <p className="mt-1 text-[13px] text-whites">
                           {item.desc}
                         </p>
                         <div className="mt-2 text-xs text-white/50">
@@ -104,10 +119,28 @@ export default async function Home() {
                 </div>
 
                 <div className="rounded-lg border border-white/10 bg-[#0d1117]">
-                  <div className="px-4 py-3  text-sm text-white/80">
-                    Recommended for you
+                  <div className="flex items-center justify-between px-3 py-3">
+                    <div className="text-sm text-white/60">
+                      <div className="inline-flex items-center gap-2">
+                        <span>
+                          <svg
+                            aria-hidden="true"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            version="1.1"
+                            width="16"
+                            data-view-component="true"
+                            fill="currentColor"
+                          >
+                            <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path>
+                          </svg>
+                        </span>
+                        <span>Recommended for you</span>
+                      </div>
+                    </div>
                   </div>
-                  <ul className="p-3 px-0 space-y-3">
+
+                  <ul className="p-3 pt-0 px-0 space-y-3">
                     {[
                       {
                         name: "yangshun/front-end-interview-handbook",
@@ -155,8 +188,8 @@ export default async function Home() {
                   </ul>
                 </div>
 
-                <div className="rounded-lg border border-white/10 bg-[#010409] p-3">
-                  <h3 className="text-sm font-semibold text-white/90">
+                <div className="rounded-lg border border-white/10 bg-[#0d1117] p-3 px-0">
+                  <h3 className="text-sm font-semibold text-white/90 pl-3">
                     Explore repositories
                   </h3>
                   <ul className="mt-2 space-y-2">
@@ -164,25 +197,39 @@ export default async function Home() {
                       {
                         name: "jhlywa / chess.js",
                         lang: "TypeScript",
+                        description:
+                          "A JavaScript chess library for chess move generation, validation, and engine communication",
                         stars: "4.1k",
                       },
                       {
                         name: "official-stockfish / fishtest",
                         lang: "Python",
+                        description:
+                          "Distributed testing framework for the Stockfish chess engine",
                         stars: "311",
                       },
                       {
                         name: "excaliburjs / Excalibur",
                         lang: "TypeScript",
+                        description:
+                          "A JavaScript/TypeScript game engine for making 2D games with HTML5 and WebGL",
                         stars: "2.1k",
                       },
-                    ].map((r) => (
+                    ].map((r, index) => (
                       <li
                         key={r.name}
-                        className="rounded border border-white/10 p-3"
+                        className={`rounded border-b border-white/10 p-3 flex flex-col gap-y-3
+                            ${index === 2 ? "border-b-0" : "border-b"}
+                          `}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="text-sm">{r.name}</div>
+                          <div className="flex-1 min-w-0 mr-4 space-y-3">
+                            <div className="text-sm">{r.name}</div>
+                            <div className="text-xs text-white/70">
+                              {r.description}
+                            </div>
+                          </div>
+
                           <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
                             ★ Star
                           </button>
