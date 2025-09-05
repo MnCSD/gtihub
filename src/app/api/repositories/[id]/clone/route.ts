@@ -107,73 +107,54 @@ export async function GET(
   }
 }
 
-// For public repositories or when authentication is not required
-export async function POST(request: NextRequest) {
+// For cloning with user email from CLI config  
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { repositoryId, userEmail } = await request.json();
+    const { userEmail = 'mnikolopoylos@gmail.com' } = await request.json();
+    const { id } = params;
 
-    if (!repositoryId) {
+    console.log('Clone endpoint called for:', id, 'by user:', userEmail);
+
+    if (!id) {
       return NextResponse.json({ error: 'Repository ID is required' }, { status: 400 });
     }
 
-    // Find repository by name and owner email (for public access)
-    let repository;
-    
-    if (userEmail) {
-      const owner = await prisma.user.findUnique({
-        where: { email: userEmail }
-      });
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
 
-      if (owner) {
-        repository = await prisma.repository.findFirst({
-          where: {
-            name: repositoryId,
-            ownerId: owner.id
-          },
-          include: {
-            owner: {
-              select: {
-                name: true,
-                email: true
-              }
-            },
-            branches: true,
-            commits: {
-              include: {
-                files: true
-              },
-              orderBy: {
-                timestamp: 'asc'
-              }
-            }
+    if (!user) {
+      return NextResponse.json({ error: `User not found with email: ${userEmail}` }, { status: 404 });
+    }
+
+    // Find repository by ID and check ownership
+    const repository = await prisma.repository.findFirst({
+      where: {
+        id: id,
+        ownerId: user.id
+      },
+      include: {
+        owner: {
+          select: {
+            name: true,
+            email: true
           }
-        });
-      }
-    } else {
-      // Try to find by repository ID directly
-      repository = await prisma.repository.findFirst({
-        where: {
-          id: repositoryId
         },
-        include: {
-          owner: {
-            select: {
-              name: true,
-              email: true
-            }
+        branches: true,
+        commits: {
+          include: {
+            files: true
           },
-          branches: true,
-          commits: {
-            include: {
-              files: true
-            },
-            orderBy: {
-              timestamp: 'asc'
-            }
+          orderBy: {
+            timestamp: 'asc'
           }
         }
-      });
-    }
+      }
+    });
 
     if (!repository) {
       return NextResponse.json({ error: 'Repository not found' }, { status: 404 });

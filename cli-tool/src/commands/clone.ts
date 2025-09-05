@@ -67,22 +67,44 @@ export const cloneCommand = new Command('clone')
 
       console.log(chalk.gray(`Fetching repository data for '${repositoryId}'...`));
 
-      // Fetch repository data from API
-      let cloneData: CloneData;
-      const useTestEndpoint = process.env.GITH_USE_TEST_ENDPOINT === 'true';
-
-      if (useTestEndpoint) {
-        // Use test endpoint for cloning
-        const response = await axios.post(`${apiUrl}/test-clone`, {
-          repositoryId,
-          userEmail: 'mnikolopoylos@gmail.com' // Could be made configurable
-        });
-        cloneData = response.data;
-      } else {
-        // Use authenticated endpoint
-        const response = await axios.get(`${apiUrl}/repositories/${repositoryId}/clone`);
-        cloneData = response.data;
+      // Get user email from global config for authentication
+      let userEmail = 'mnikolopoylos@gmail.com'; // Default fallback
+      
+      try {
+        const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+        const globalConfigFile = path.join(homeDir, '.githconfig');
+        
+        if (await fs.pathExists(globalConfigFile)) {
+          const configContent = await fs.readFile(globalConfigFile, 'utf-8');
+          const lines = configContent.split('\n');
+          let inUserSection = false;
+          
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed === '[user]') {
+              inUserSection = true;
+            } else if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+              inUserSection = false;
+            } else if (inUserSection && trimmed.includes('=')) {
+              const [key, value] = trimmed.split('=').map(s => s.trim());
+              if (key === 'email') {
+                userEmail = value;
+                break;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // Use default email if config reading fails
       }
+
+      console.log(chalk.gray(`Using user email: ${userEmail}`));
+
+      // Use the clone endpoint that works with user email
+      const response = await axios.post(`${apiUrl}/repositories/${repositoryId}/clone`, {
+        userEmail
+      });
+      const cloneData: CloneData = response.data;
 
       // Determine directory name
       const targetDir = directory || cloneData.repository.name;

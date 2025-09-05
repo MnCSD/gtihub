@@ -51,7 +51,8 @@
       "Bash(gith log -n 3)",
       "Read(//c/Users/MariosNikolopoulos/Pictures/Screenshots/**)",
       "Bash(gith log -n 1)",
-      "Bash(GITH_USE_TEST_ENDPOINT=true gith clone test-repo-files)"
+      "Bash(GITH_USE_TEST_ENDPOINT=true gith clone test-repo-files)",
+      "Bash(gith clone cmf6w39li000l1a6sm29cjt5t)"
     ],
     "deny": [],
     "ask": []
