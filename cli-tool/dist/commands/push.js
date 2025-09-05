@@ -43,11 +43,13 @@ const fs = __importStar(require("fs-extra"));
 const path = __importStar(require("path"));
 const crypto = __importStar(require("crypto"));
 const axios_1 = __importDefault(require("axios"));
+const remote_1 = require("../utils/remote");
 exports.pushCommand = new commander_1.Command('push')
     .description('Update remote refs along with associated objects')
-    .argument('[repository]', 'repository URL or ID')
+    .argument('[remote]', 'remote name', 'origin')
+    .argument('[branch]', 'branch name')
     .option('-u, --set-upstream', 'set upstream for git pull/status')
-    .action(async (repository, options) => {
+    .action(async (remoteName, branchName, options) => {
     const currentDir = process.cwd();
     const githDir = path.join(currentDir, '.gith');
     const headFile = path.join(githDir, 'HEAD');
@@ -60,20 +62,30 @@ exports.pushCommand = new commander_1.Command('push')
         // Get current branch
         const headContent = await fs.readFile(headFile, 'utf-8');
         const branchRef = headContent.trim().replace('ref: ', '');
-        const branchName = branchRef.split('/').pop() || 'main';
+        const currentBranch = branchRef.split('/').pop() || 'main';
+        const targetBranch = branchName || currentBranch;
         const branchFile = path.join(githDir, branchRef);
         if (!(await fs.pathExists(branchFile))) {
             console.error(chalk_1.default.red('fatal: no commits to push'));
             process.exit(1);
         }
         const currentCommitSha = (await fs.readFile(branchFile, 'utf-8')).trim();
-        // For demo, use localhost API. In production, this would be configurable
-        const apiUrl = repository || 'http://localhost:3000/api';
-        const repositoryId = process.env.GITH_REPOSITORY_ID || 'demo-repo-id';
+        // Get remote configuration
+        const remote = await (0, remote_1.getRemoteConfig)(remoteName || 'origin');
+        if (!remote) {
+            console.error(chalk_1.default.red(`fatal: no remote configured for '${remoteName || 'origin'}'`));
+            console.log(chalk_1.default.yellow('Hint: Run "gith remote add origin <url>" to add a remote'));
+            process.exit(1);
+        }
+        if (!remote.repositoryId) {
+            console.error(chalk_1.default.red('fatal: no repository ID configured for remote'));
+            console.log(chalk_1.default.yellow('Hint: Run "gith remote set-url origin <url> -r <repository-id>" to set repository ID'));
+            process.exit(1);
+        }
         const useTestEndpoint = process.env.GITH_USE_TEST_ENDPOINT === 'true';
         const endpoint = useTestEndpoint
-            ? `${apiUrl}/test-push`
-            : `${apiUrl}/repositories/${repositoryId}/commits`;
+            ? `${remote.url}/test-push`
+            : `${remote.url}/repositories/${remote.repositoryId}/commits`;
         console.log(chalk_1.default.blue('Pushing to'), chalk_1.default.yellow(endpoint));
         // Collect all commits to push (walk back from current commit)
         const commitsToSend = [];
@@ -228,14 +240,14 @@ exports.pushCommand = new commander_1.Command('push')
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             const requestData = useTestEndpoint
-                ? { repositoryId, commits: commitsToSend, branch: branchName }
-                : { commits: commitsToSend, branch: branchName };
+                ? { repositoryId: remote.repositoryId, commits: commitsToSend, branch: targetBranch }
+                : { commits: commitsToSend, branch: targetBranch };
             const response = await axios_1.default.post(endpoint, requestData, { headers });
             const { commitsCreated } = response.data;
-            console.log(chalk_1.default.green('To'), chalk_1.default.yellow(`${apiUrl}/repositories/${repositoryId}`));
+            console.log(chalk_1.default.green('To'), chalk_1.default.yellow(`${remote.url}/repositories/${remote.repositoryId}`));
             if (commitsCreated > 0) {
                 const shortSha = currentCommitSha.substring(0, 7);
-                console.log(chalk_1.default.green(`   ${currentCommitSha.substring(0, 7)}..${shortSha}  ${branchName} -> ${branchName}`));
+                console.log(chalk_1.default.green(`   ${shortSha}..${shortSha}  ${targetBranch} -> ${targetBranch}`));
                 console.log(chalk_1.default.green(`✓ Successfully pushed ${commitsCreated} commit${commitsCreated !== 1 ? 's' : ''}`));
             }
             else {
@@ -251,7 +263,7 @@ exports.pushCommand = new commander_1.Command('push')
             }
             else if (error.request) {
                 console.error(chalk_1.default.red('Push failed: Unable to connect to remote repository'));
-                console.log(chalk_1.default.yellow(`Hint: Check if ${apiUrl} is accessible`));
+                console.log(chalk_1.default.yellow(`Hint: Check if ${remote.url} is accessible`));
             }
             else {
                 console.error(chalk_1.default.red('Push failed:'), error.message);

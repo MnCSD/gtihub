@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import axios from 'axios';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { setRemoteConfig } from '../utils/remote';
 
 const execAsync = promisify(exec);
 
@@ -45,27 +46,14 @@ interface CloneData {
 
 export const cloneCommand = new Command('clone')
   .description('Clone a repository into a new directory')
-  .argument('<repository>', 'repository URL or ID to clone')
+  .argument('<url>', 'repository URL (e.g., http://localhost:3000/api)')
+  .argument('<repository-id>', 'repository ID to clone')
   .argument('[directory]', 'directory name (defaults to repository name)')
-  .action(async (repository: string, directory?: string) => {
+  .action(async (url: string, repositoryId: string, directory?: string) => {
     try {
       console.log(chalk.blue('Cloning repository...'));
 
-      // Parse repository identifier
-      let repositoryId: string;
-      let apiUrl = 'http://localhost:3000/api';
-
-      // Handle different URL formats
-      if (repository.startsWith('http')) {
-        // Extract repo ID from URL (e.g., https://your-app.com/repos/user/repo-name)
-        const urlParts = repository.split('/');
-        repositoryId = urlParts[urlParts.length - 1];
-      } else {
-        // Direct repository ID
-        repositoryId = repository;
-      }
-
-      console.log(chalk.gray(`Fetching repository data for '${repositoryId}'...`));
+      console.log(chalk.gray(`Fetching repository data for '${repositoryId}' from ${url}...`));
 
       // Fetch repository data from API
       let cloneData: CloneData;
@@ -73,14 +61,14 @@ export const cloneCommand = new Command('clone')
 
       if (useTestEndpoint) {
         // Use test endpoint for cloning
-        const response = await axios.post(`${apiUrl}/test-clone`, {
+        const response = await axios.post(`${url}/test-clone`, {
           repositoryId,
           userEmail: 'mnikolopoylos@gmail.com' // Could be made configurable
         });
         cloneData = response.data;
       } else {
         // Use authenticated endpoint
-        const response = await axios.get(`${apiUrl}/repositories/${repositoryId}/clone`);
+        const response = await axios.get(`${url}/repositories/${repositoryId}/clone`);
         cloneData = response.data;
       }
 
@@ -110,25 +98,19 @@ export const cloneCommand = new Command('clone')
         `ref: refs/heads/${cloneData.defaultBranch}\n`
       );
 
-      // Create config file
+      // Create config file (basic config, remote will be added later)
       const config = `[core]
 \trepositoryformatversion = 0
 \tfilemode = true
 \tbare = false
 \tlogallrefupdates = true
-[remote "origin"]
-\turl = ${repository}
-\tfetch = +refs/heads/*:refs/remotes/origin/*
-[branch "${cloneData.defaultBranch}"]
-\tremote = origin
-\tmerge = refs/heads/${cloneData.defaultBranch}
 `;
       await fs.writeFile(path.join(githDir, 'config'), config);
 
       // Create description file
       await fs.writeFile(
         path.join(githDir, 'description'),
-        cloneData.repository.description || `Repository cloned from ${repository}\n`
+        cloneData.repository.description || `Repository cloned from ${url}\n`
       );
 
       console.log(chalk.gray(`Recreating ${cloneData.commits.length} commits...`));
@@ -193,6 +175,11 @@ export const cloneCommand = new Command('clone')
           }
         }
       }
+
+      // Set up remote configuration
+      console.log(chalk.gray('Setting up remote origin...'));
+      process.chdir(targetPath); // Change to the cloned directory
+      await setRemoteConfig('origin', url, repositoryId);
 
       // Hide .gith directory on Windows
       if (process.platform === 'win32') {

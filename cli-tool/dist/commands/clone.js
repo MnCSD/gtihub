@@ -44,34 +44,23 @@ const path = __importStar(require("path"));
 const axios_1 = __importDefault(require("axios"));
 const child_process_1 = require("child_process");
 const util_1 = require("util");
+const remote_1 = require("../utils/remote");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 exports.cloneCommand = new commander_1.Command('clone')
     .description('Clone a repository into a new directory')
-    .argument('<repository>', 'repository URL or ID to clone')
+    .argument('<url>', 'repository URL (e.g., http://localhost:3000/api)')
+    .argument('<repository-id>', 'repository ID to clone')
     .argument('[directory]', 'directory name (defaults to repository name)')
-    .action(async (repository, directory) => {
+    .action(async (url, repositoryId, directory) => {
     try {
         console.log(chalk_1.default.blue('Cloning repository...'));
-        // Parse repository identifier
-        let repositoryId;
-        let apiUrl = 'http://localhost:3000/api';
-        // Handle different URL formats
-        if (repository.startsWith('http')) {
-            // Extract repo ID from URL (e.g., https://your-app.com/repos/user/repo-name)
-            const urlParts = repository.split('/');
-            repositoryId = urlParts[urlParts.length - 1];
-        }
-        else {
-            // Direct repository ID
-            repositoryId = repository;
-        }
-        console.log(chalk_1.default.gray(`Fetching repository data for '${repositoryId}'...`));
+        console.log(chalk_1.default.gray(`Fetching repository data for '${repositoryId}' from ${url}...`));
         // Fetch repository data from API
         let cloneData;
         const useTestEndpoint = process.env.GITH_USE_TEST_ENDPOINT === 'true';
         if (useTestEndpoint) {
             // Use test endpoint for cloning
-            const response = await axios_1.default.post(`${apiUrl}/test-clone`, {
+            const response = await axios_1.default.post(`${url}/test-clone`, {
                 repositoryId,
                 userEmail: 'mnikolopoylos@gmail.com' // Could be made configurable
             });
@@ -79,7 +68,7 @@ exports.cloneCommand = new commander_1.Command('clone')
         }
         else {
             // Use authenticated endpoint
-            const response = await axios_1.default.get(`${apiUrl}/repositories/${repositoryId}/clone`);
+            const response = await axios_1.default.get(`${url}/repositories/${repositoryId}/clone`);
             cloneData = response.data;
         }
         // Determine directory name
@@ -100,22 +89,16 @@ exports.cloneCommand = new commander_1.Command('clone')
         await fs.ensureDir(path.join(githDir, 'refs', 'tags'));
         // Create HEAD file
         await fs.writeFile(path.join(githDir, 'HEAD'), `ref: refs/heads/${cloneData.defaultBranch}\n`);
-        // Create config file
+        // Create config file (basic config, remote will be added later)
         const config = `[core]
 \trepositoryformatversion = 0
 \tfilemode = true
 \tbare = false
 \tlogallrefupdates = true
-[remote "origin"]
-\turl = ${repository}
-\tfetch = +refs/heads/*:refs/remotes/origin/*
-[branch "${cloneData.defaultBranch}"]
-\tremote = origin
-\tmerge = refs/heads/${cloneData.defaultBranch}
 `;
         await fs.writeFile(path.join(githDir, 'config'), config);
         // Create description file
-        await fs.writeFile(path.join(githDir, 'description'), cloneData.repository.description || `Repository cloned from ${repository}\n`);
+        await fs.writeFile(path.join(githDir, 'description'), cloneData.repository.description || `Repository cloned from ${url}\n`);
         console.log(chalk_1.default.gray(`Recreating ${cloneData.commits.length} commits...`));
         // Recreate commits in chronological order
         for (const commit of cloneData.commits) {
@@ -170,6 +153,10 @@ exports.cloneCommand = new commander_1.Command('clone')
                 }
             }
         }
+        // Set up remote configuration
+        console.log(chalk_1.default.gray('Setting up remote origin...'));
+        process.chdir(targetPath); // Change to the cloned directory
+        await (0, remote_1.setRemoteConfig)('origin', url, repositoryId);
         // Hide .gith directory on Windows
         if (process.platform === 'win32') {
             try {

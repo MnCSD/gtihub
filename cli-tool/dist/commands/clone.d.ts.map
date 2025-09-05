@@ -1,1 +1,1 @@
-{"version":3,"file":"clone.d.ts","sourceRoot":"","sources":["../../src/commands/clone.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AA6CpC,eAAO,MAAM,YAAY,SAmLrB,CAAC"}
+{"version":3,"file":"clone.d.ts","sourceRoot":"","sources":["../../src/commands/clone.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AA8CpC,eAAO,MAAM,YAAY,SAqKrB,CAAC"}

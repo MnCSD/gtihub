@@ -11,6 +11,7 @@ import { pushCommand } from "./commands/push";
 import { configCommand } from "./commands/config";
 import { logCommand } from "./commands/log";
 import { cloneCommand } from "./commands/clone";
+import { remoteCommand } from "./commands/remote";
 
 const program = new Command();
 
@@ -41,6 +42,7 @@ grow, mark and tweak your common history
 
 collaborate
    push       Update remote refs along with associated objects
+   remote     Manage set of tracked repositories
 
 setup and config
    config     Get and set repository or global options
@@ -63,6 +65,7 @@ program.addCommand(pushCommand);
 program.addCommand(configCommand);
 program.addCommand(logCommand);
 program.addCommand(cloneCommand);
+program.addCommand(remoteCommand);
 
 // Global error handler
 program.exitOverride((err) => {
