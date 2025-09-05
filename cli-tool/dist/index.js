@@ -9,6 +9,7 @@ const chalk_1 = __importDefault(require("chalk"));
 const hello_1 = require("./commands/hello");
 const init_1 = require("./commands/init");
 const add_1 = require("./commands/add");
+const status_1 = require("./commands/status");
 const program = new commander_1.Command();
 program
     .name("gith")
@@ -27,6 +28,9 @@ start a working area
 work on the current change
    add        Add file contents to the index
 
+examine the history and state
+   status     Show the working tree status
+
 testing and development
    hello      Print Hello World
 
@@ -38,6 +42,7 @@ See 'gith --version' for version information.`;
 program.addCommand(hello_1.helloCommand);
 program.addCommand(init_1.initCommand);
 program.addCommand(add_1.addCommand);
+program.addCommand(status_1.statusCommand);
 // Global error handler
 program.exitOverride((err) => {
     if (err.code === "commander.unknownCommand") {

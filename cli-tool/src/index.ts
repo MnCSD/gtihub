@@ -5,6 +5,7 @@ import chalk from "chalk";
 import { helloCommand } from "./commands/hello";
 import { initCommand } from "./commands/init";
 import { addCommand } from "./commands/add";
+import { statusCommand } from "./commands/status";
 
 const program = new Command();
 
@@ -25,6 +26,9 @@ start a working area
 work on the current change
    add        Add file contents to the index
 
+examine the history and state
+   status     Show the working tree status
+
 testing and development
    hello      Print Hello World
 
@@ -37,6 +41,7 @@ See 'gith --version' for version information.`;
 program.addCommand(helloCommand);
 program.addCommand(initCommand);
 program.addCommand(addCommand);
+program.addCommand(statusCommand);
 
 // Global error handler
 program.exitOverride((err) => {

@@ -19,7 +19,9 @@
       "Bash(gith add test.txt another.txt)",
       "Bash(gith add nonexistent.txt)",
       "Bash(npm install:*)",
-      "Bash(gith add .)"
+      "Bash(gith add .)",
+      "Bash(gith status)",
+      "Bash(gith add untracked.txt)"
     ],
     "deny": [],
     "ask": []
