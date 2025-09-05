@@ -17,7 +17,9 @@
       "Bash(attrib:*)",
       "Bash(gith add test.txt)",
       "Bash(gith add test.txt another.txt)",
-      "Bash(gith add nonexistent.txt)"
+      "Bash(gith add nonexistent.txt)",
+      "Bash(npm install:*)",
+      "Bash(gith add .)"
     ],
     "deny": [],
     "ask": []

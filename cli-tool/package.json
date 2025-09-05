@@ -12,21 +12,26 @@
     "start": "node dist/index.js",
     "prepublish": "npm run build"
   },
-  "keywords": ["git", "cli", "version-control"],
+  "keywords": [
+    "git",
+    "cli",
+    "version-control"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "commander": "^11.1.0",
     "axios": "^1.6.0",
     "chalk": "^4.1.2",
-    "inquirer": "^8.2.6",
+    "commander": "^11.1.0",
     "crypto": "^1.0.1",
-    "fs-extra": "^11.1.1"
+    "fs-extra": "^11.1.1",
+    "glob": "^11.0.3",
+    "inquirer": "^8.2.6"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/inquirer": "^8.2.10",
     "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^8.2.10",
+    "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   }
 }

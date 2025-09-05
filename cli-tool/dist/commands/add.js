@@ -42,6 +42,7 @@ const chalk_1 = __importDefault(require("chalk"));
 const fs = __importStar(require("fs-extra"));
 const path = __importStar(require("path"));
 const crypto = __importStar(require("crypto"));
+const glob_1 = require("glob");
 exports.addCommand = new commander_1.Command('add')
     .description('Add file contents to the index')
     .argument('<files...>', 'Files to add to the staging area')
@@ -61,7 +62,20 @@ exports.addCommand = new commander_1.Command('add')
             const indexContent = await fs.readFile(indexFile, 'utf-8');
             index = JSON.parse(indexContent);
         }
-        for (const file of files) {
+        // Expand files if '.' is provided
+        let filesToProcess = files;
+        if (files.includes('.')) {
+            // Find all files in current directory and subdirectories, excluding .gith
+            const allFiles = await (0, glob_1.glob)('**/*', {
+                cwd: currentDir,
+                ignore: ['.gith/**', '**/node_modules/**', '**/.git/**'],
+                nodir: true,
+                dot: false
+            });
+            // Remove '.' from the array and add all found files
+            filesToProcess = files.filter(f => f !== '.').concat(allFiles);
+        }
+        for (const file of filesToProcess) {
             const filePath = path.resolve(currentDir, file);
             // Check if file exists
             if (!(await fs.pathExists(filePath))) {

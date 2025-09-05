@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { glob } from 'glob';
 
 export const addCommand = new Command('add')
   .description('Add file contents to the index')
@@ -26,7 +27,22 @@ export const addCommand = new Command('add')
         index = JSON.parse(indexContent);
       }
 
-      for (const file of files) {
+      // Expand files if '.' is provided
+      let filesToProcess = files;
+      if (files.includes('.')) {
+        // Find all files in current directory and subdirectories, excluding .gith
+        const allFiles = await glob('**/*', {
+          cwd: currentDir,
+          ignore: ['.gith/**', '**/node_modules/**', '**/.git/**'],
+          nodir: true,
+          dot: false
+        });
+        
+        // Remove '.' from the array and add all found files
+        filesToProcess = files.filter(f => f !== '.').concat(allFiles);
+      }
+
+      for (const file of filesToProcess) {
         const filePath = path.resolve(currentDir, file);
         
         // Check if file exists
