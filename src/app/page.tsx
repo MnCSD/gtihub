@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Navbar from "@/components/dashboard/navbar";
 import Sidebar from "@/components/dashboard/sidebar";
+import RepoCard from "@/components/repo-card";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -27,8 +28,8 @@ export default async function Home() {
           </div>
 
           {/* Grouped center + right with width constraint */}
-          <div className="flex-1 max-w-[1540px] mx-auto w-full pt-18">
-            <div className="mx-auto max-w-[1230px] grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="flex-1 lg:max-w-[1100px] 3xl:max-w-[1540px] mx-auto w-full pt-18">
+            <div className="mx-auto lg:max-w-[1230px] max-w-[300px] grid grid-cols-1 lg:grid-cols-3 gap-10">
               {/* Center feed */}
               <section className="lg:col-span-2 space-y-4">
                 <h1 className="text-2xl font-semibold">Home</h1>
@@ -101,17 +102,19 @@ export default async function Home() {
                           index === 1 ? "" : "border-b border-white/10"
                         } p-3`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium text-sm">{item.name}</div>
-                          <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
-                            ★ Star
-                          </button>
-                        </div>
-                        <p className="mt-1 text-[13px] text-whites">
-                          {item.desc}
-                        </p>
-                        <div className="mt-2 text-xs text-white/50">
-                          {item.lang} • {item.stars}
+                        <div className="mt-2">
+                          <RepoCard
+                            name={item.name}
+                            description={item.desc}
+                            language={item.lang}
+                            stars={item.stars}
+                            compact
+                            rightAction={
+                              <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
+                                ☆ Star
+                              </button>
+                            }
+                          />
                         </div>
                       </li>
                     ))}
@@ -150,18 +153,18 @@ export default async function Home() {
                       },
                     ].map((item) => (
                       <li key={item.name} className="rounded p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">{item.name}</div>
-                          <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
-                            ★ Star
-                          </button>
-                        </div>
-                        <p className="mt-1 text-sm text-white/70">
-                          {item.desc}
-                        </p>
-                        <div className="mt-2 text-xs text-white/50">
-                          {item.lang} • {item.stars}
-                        </div>
+                        <RepoCard
+                          name={item.name}
+                          description={item.desc}
+                          language={item.lang}
+                          stars={item.stars}
+                          compact
+                          rightAction={
+                            <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
+                              ☆ Star
+                            </button>
+                          }
+                        />
                       </li>
                     ))}
                   </ul>
@@ -174,18 +177,27 @@ export default async function Home() {
                   <h3 className="text-sm font-semibold text-white/90">
                     Latest changes
                   </h3>
-                  <ul className="mt-2 space-y-2 text-sm text-white/70">
-                    {[
-                      "Improved file navigation and editing in the web UI",
-                      "Manage Copilot and users via Enterprise Teams in public preview",
-                      "Remote GitHub MCP Server is now generally available",
-                    ].map((t, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="mt-1 size-1.5 rounded-full bg-white/40" />
-                        <span>{t}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="relative pl-4">
+                    <div
+                      className="absolute left-[9px] top-2 bottom-1 w-px bg-white/20"
+                      aria-hidden
+                    />
+                    <ul className="mt-2 space-y-3 text-sm text-white/70">
+                      {[
+                        "Improved file navigation and editing in the web UI",
+                        "Manage Copilot and users via Enterprise Teams in public preview",
+                        "Remote GitHub MCP Server is now generally available",
+                      ].map((t, i) => (
+                        <li key={i} className="relative pl-2">
+                          <span
+                            className="absolute -left-3 top-1.5 size-2.5 rounded-full bg-white/60 border border-[#010409]"
+                            aria-hidden
+                          />
+                          <span className="block leading-5">{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 <div className="rounded-lg border border-white/10 bg-[#0d1117] p-3 px-0">
@@ -222,21 +234,18 @@ export default async function Home() {
                             ${index === 2 ? "border-b-0" : "border-b"}
                           `}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0 mr-4 space-y-3">
-                            <div className="text-sm">{r.name}</div>
-                            <div className="text-xs text-white/70">
-                              {r.description}
-                            </div>
-                          </div>
-
-                          <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
-                            ★ Star
-                          </button>
-                        </div>
-                        <div className="mt-1 text-xs text-white/50">
-                          {r.stars} • {r.lang}
-                        </div>
+                        <RepoCard
+                          name={r.name}
+                          description={r.description}
+                          language={r.lang}
+                          stars={r.stars}
+                          compact
+                          rightAction={
+                            <button className="text-xs rounded border border-white/20 px-1.5 py-0.5 hover:bg-white/10">
+                              ☆ Star
+                            </button>
+                          }
+                        />
                       </li>
                     ))}
                   </ul>
