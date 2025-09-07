@@ -1,7 +1,0 @@
-console.log("Hello from Gith CLI!");
-
-function main() {
-  console.log("This is a test file for commit testing");
-}
-
-main();

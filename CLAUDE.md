@@ -5,14 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 - **Start development server**: `npm run dev` (uses Turbopack for faster builds)
-- **Build for production**: `npm run build --turbopack`
+- **Build for production**: `npm run build` (Turbopack enabled)
 - **Start production server**: `npm start`
 - **Lint code**: `npm run lint` (ESLint with Next.js and TypeScript rules)
 - **Database operations**: Use `npx prisma` commands for schema changes and migrations
+- **Generate Prisma client**: `npx prisma generate`
 
 ## Architecture Overview
 
-This is a Next.js 15 application that replicates GitHub's interface and functionality. The app uses the App Router architecture with TypeScript and Tailwind CSS.
+This is a Next.js 15 application that replicates GitHub's interface and functionality, including a custom Git implementation called "gith". The app uses the App Router architecture with TypeScript and Tailwind CSS.
 
 ### Key Technologies
 - **Next.js 15**: React framework with App Router
@@ -57,9 +58,17 @@ Prisma schema includes standard NextAuth models:
 ### Key Files
 - `src/lib/auth.ts`: NextAuth configuration
 - `src/lib/prisma.ts`: Database client setup
+- `src/lib/gith-config.ts`: Custom git configuration management
 - `src/lib/languageColors.ts`: Programming language color mappings
 - `colors.json`: Extended color definitions
 - `prisma/schema.prisma`: Database schema
+
+### Custom Git Implementation ("gith")
+The project includes a custom git implementation called "gith" with:
+- Repository management API routes in `src/app/api/repositories/`
+- Git configuration system similar to standard git (`src/lib/gith-config.ts`)
+- Support for commits, cloning, and status operations
+- Integration with the main web interface for repository display
 
 ## Project Structure Notes
 - Uses `@/` path alias for `src/` directory

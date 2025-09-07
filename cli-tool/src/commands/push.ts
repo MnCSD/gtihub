@@ -4,7 +4,49 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import axios from 'axios';
-import { getRemoteConfig } from '../utils/remote';
+import { getRemoteConfig, getApiUrl } from '../utils/remote';
+
+async function getGithConfigValue(key: string): Promise<string | undefined> {
+  const currentDir = process.cwd();
+  const githDir = path.join(currentDir, '.gith');
+  
+  // Try local config first
+  const localConfigFile = path.join(githDir, 'config');
+  if (await fs.pathExists(localConfigFile)) {
+    const configValue = await parseConfigFile(localConfigFile, key);
+    if (configValue !== undefined) return configValue;
+  }
+  
+  // Try global config
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  const globalConfigFile = path.join(homeDir, '.githconfig');
+  if (await fs.pathExists(globalConfigFile)) {
+    return await parseConfigFile(globalConfigFile, key);
+  }
+  
+  return undefined;
+}
+
+async function parseConfigFile(configFile: string, searchKey: string): Promise<string | undefined> {
+  const configContent = await fs.readFile(configFile, 'utf-8');
+  const lines = configContent.split('\n');
+  let currentSection = '';
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      currentSection = trimmed.slice(1, -1);
+    } else if (trimmed.includes('=')) {
+      const [configKey, configValue] = trimmed.split('=').map(s => s.trim());
+      const fullKey = currentSection ? `${currentSection}.${configKey}` : configKey;
+      if (fullKey === searchKey) {
+        return configValue;
+      }
+    }
+  }
+  
+  return undefined;
+}
 
 interface CommitData {
   sha: string;
@@ -68,18 +110,25 @@ export const pushCommand = new Command('push')
         process.exit(1);
       }
 
-      if (!remote.repositoryId) {
-        console.error(chalk.red('fatal: no repository ID configured for remote'));
-        console.log(chalk.yellow('Hint: Run "gith remote set-url origin <url> -r <repository-id>" to set repository ID'));
+      // Extract repository info from URL or use stored repositoryId
+      let repositoryId = remote.repositoryId;
+      if (!repositoryId && remote.username && remote.repoName) {
+        repositoryId = `${remote.username}/${remote.repoName}`;
+      }
+
+      if (!repositoryId) {
+        console.error(chalk.red('fatal: unable to determine repository from remote URL'));
+        console.log(chalk.yellow('Hint: Use format https://localhost:3000/{username}/{reponame}'));
         process.exit(1);
       }
 
-      const useTestEndpoint = process.env.GITH_USE_TEST_ENDPOINT === 'true';
-      const endpoint = useTestEndpoint 
-        ? `${remote.url}/test-push`
-        : `${remote.url}/repositories/${remote.repositoryId}/commits`;
+      // Convert web URL to API URL
+      const apiUrl = getApiUrl(remote.url);
+      // URL encode the repository ID to handle username/reponame format
+      const encodedRepositoryId = encodeURIComponent(repositoryId);
+      const endpoint = `${apiUrl}/repositories/${encodedRepositoryId}/commits`;
 
-      console.log(chalk.blue('Pushing to'), chalk.yellow(endpoint));
+      console.log(chalk.blue('Pushing to'), chalk.yellow(remote.url));
 
       // Collect all commits to push (walk back from current commit)
       const commitsToSend: CommitData[] = [];
@@ -249,15 +298,21 @@ export const pushCommand = new Command('push')
           headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const requestData = useTestEndpoint 
-          ? { repositoryId: remote.repositoryId, commits: commitsToSend, branch: targetBranch }
-          : { commits: commitsToSend, branch: targetBranch };
+        // Get user info from local gith config
+        const userName = await getGithConfigValue('user.name');
+        const userEmail = await getGithConfigValue('user.email');
+        
+        const requestData = { 
+          commits: commitsToSend, 
+          branch: targetBranch,
+          user: { name: userName, email: userEmail } // Send user info with the request
+        };
 
         const response = await axios.post(endpoint, requestData, { headers });
 
         const { commitsCreated } = response.data;
 
-        console.log(chalk.green('To'), chalk.yellow(`${remote.url}/repositories/${remote.repositoryId}`));
+        console.log(chalk.green('To'), chalk.yellow(remote.url));
         
         if (commitsCreated > 0) {
           const shortSha = currentCommitSha.substring(0, 7);
@@ -275,7 +330,7 @@ export const pushCommand = new Command('push')
           }
         } else if (error.request) {
           console.error(chalk.red('Push failed: Unable to connect to remote repository'));
-          console.log(chalk.yellow(`Hint: Check if ${remote.url} is accessible`));
+          console.log(chalk.yellow(`Hint: Check if ${apiUrl} is accessible`));
         } else {
           console.error(chalk.red('Push failed:'), error.message);
         }

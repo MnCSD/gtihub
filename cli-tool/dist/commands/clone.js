@@ -48,29 +48,25 @@ const remote_1 = require("../utils/remote");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 exports.cloneCommand = new commander_1.Command('clone')
     .description('Clone a repository into a new directory')
-    .argument('<url>', 'repository URL (e.g., http://localhost:3000/api)')
-    .argument('<repository-id>', 'repository ID to clone')
+    .argument('<url>', 'repository URL (e.g., https://localhost:3000/username/reponame)')
     .argument('[directory]', 'directory name (defaults to repository name)')
-    .action(async (url, repositoryId, directory) => {
+    .action(async (url, directory) => {
     try {
         console.log(chalk_1.default.blue('Cloning repository...'));
-        console.log(chalk_1.default.gray(`Fetching repository data for '${repositoryId}' from ${url}...`));
-        // Fetch repository data from API
-        let cloneData;
-        const useTestEndpoint = process.env.GITH_USE_TEST_ENDPOINT === 'true';
-        if (useTestEndpoint) {
-            // Use test endpoint for cloning
-            const response = await axios_1.default.post(`${url}/test-clone`, {
-                repositoryId,
-                userEmail: 'mnikolopoylos@gmail.com' // Could be made configurable
-            });
-            cloneData = response.data;
+        // Parse the web URL to extract username and repo name
+        const parsed = (0, remote_1.parseWebUrl)(url);
+        if (!parsed) {
+            console.error(chalk_1.default.red('fatal: invalid repository URL format'));
+            console.log(chalk_1.default.yellow('Expected format: https://localhost:3000/username/reponame'));
+            process.exit(1);
         }
-        else {
-            // Use authenticated endpoint
-            const response = await axios_1.default.get(`${url}/repositories/${repositoryId}/clone`);
-            cloneData = response.data;
-        }
+        const { username, repoName, baseUrl } = parsed;
+        const repositoryId = `${username}/${repoName}`;
+        console.log(chalk_1.default.gray(`Fetching repository data for '${repositoryId}' from ${baseUrl}...`));
+        // Convert to API URL and fetch repository data
+        const apiUrl = (0, remote_1.getApiUrl)(url);
+        const response = await axios_1.default.get(`${apiUrl}/repositories/${repositoryId}/clone`);
+        const cloneData = response.data;
         // Determine directory name
         const targetDir = directory || cloneData.repository.name;
         const targetPath = path.resolve(process.cwd(), targetDir);

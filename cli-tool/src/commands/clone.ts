@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 import axios from 'axios';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { setRemoteConfig } from '../utils/remote';
+import { setRemoteConfig, parseWebUrl, getApiUrl } from '../utils/remote';
 
 const execAsync = promisify(exec);
 
@@ -46,31 +46,29 @@ interface CloneData {
 
 export const cloneCommand = new Command('clone')
   .description('Clone a repository into a new directory')
-  .argument('<url>', 'repository URL (e.g., http://localhost:3000/api)')
-  .argument('<repository-id>', 'repository ID to clone')
+  .argument('<url>', 'repository URL (e.g., https://localhost:3000/username/reponame)')
   .argument('[directory]', 'directory name (defaults to repository name)')
-  .action(async (url: string, repositoryId: string, directory?: string) => {
+  .action(async (url: string, directory?: string) => {
     try {
       console.log(chalk.blue('Cloning repository...'));
 
-      console.log(chalk.gray(`Fetching repository data for '${repositoryId}' from ${url}...`));
-
-      // Fetch repository data from API
-      let cloneData: CloneData;
-      const useTestEndpoint = process.env.GITH_USE_TEST_ENDPOINT === 'true';
-
-      if (useTestEndpoint) {
-        // Use test endpoint for cloning
-        const response = await axios.post(`${url}/test-clone`, {
-          repositoryId,
-          userEmail: 'mnikolopoylos@gmail.com' // Could be made configurable
-        });
-        cloneData = response.data;
-      } else {
-        // Use authenticated endpoint
-        const response = await axios.get(`${url}/repositories/${repositoryId}/clone`);
-        cloneData = response.data;
+      // Parse the web URL to extract username and repo name
+      const parsed = parseWebUrl(url);
+      if (!parsed) {
+        console.error(chalk.red('fatal: invalid repository URL format'));
+        console.log(chalk.yellow('Expected format: https://localhost:3000/username/reponame'));
+        process.exit(1);
       }
+
+      const { username, repoName, baseUrl } = parsed;
+      const repositoryId = `${username}/${repoName}`;
+
+      console.log(chalk.gray(`Fetching repository data for '${repositoryId}' from ${baseUrl}...`));
+
+      // Convert to API URL and fetch repository data
+      const apiUrl = getApiUrl(url);
+      const response = await axios.get(`${apiUrl}/repositories/${repositoryId}/clone`);
+      const cloneData: CloneData = response.data;
 
       // Determine directory name
       const targetDir = directory || cloneData.repository.name;

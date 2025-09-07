@@ -1,6 +1,0 @@
-tree 0bc52d48ad97b2805896cba8dacccf905fd62377
-parent 0a4f64cde1f88d642ef3ef6d53e275eacd8afde9
-author User <user@example.com> 1757076779 +0000
-committer User <user@example.com> 1757076779 +0000
-
-Add greet function and improve main function

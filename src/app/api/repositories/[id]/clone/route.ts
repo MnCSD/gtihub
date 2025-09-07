@@ -25,30 +25,64 @@ export async function GET(
 
     const { id } = await params;
 
-    // Get repository with all data needed for cloning
-    const repository = await prisma.repository.findFirst({
-      where: {
-        id,
-        ownerId: user.id
-      },
-      include: {
-        owner: {
-          select: {
-            name: true,
-            email: true
-          }
+    // Parse repository ID - it can be either a direct ID or username/reponame format
+    let repository;
+    if (id.includes('/')) {
+      // Format: username/reponame
+      const [username, reponame] = id.split('/').map(decodeURIComponent);
+      
+      // Use the authenticated user as the owner (ignore username from URL)
+      console.log(`Looking for repository '${reponame}' owned by authenticated user: ${user.email}`);
+
+      repository = await prisma.repository.findFirst({
+        where: {
+          name: reponame,
+          ownerId: user.id,
         },
-        branches: true,
-        commits: {
-          include: {
-            files: true
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
           },
-          orderBy: {
-            timestamp: 'asc' // Oldest first for proper recreation
+          branches: true,
+          commits: {
+            include: {
+              files: true
+            },
+            orderBy: {
+              timestamp: 'asc' // Oldest first for proper recreation
+            }
           }
         }
-      }
-    });
+      });
+    } else {
+      // Direct repository ID
+      repository = await prisma.repository.findFirst({
+        where: {
+          id,
+          ownerId: user.id
+        },
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
+          },
+          branches: true,
+          commits: {
+            include: {
+              files: true
+            },
+            orderBy: {
+              timestamp: 'asc' // Oldest first for proper recreation
+            }
+          }
+        }
+      });
+    }
 
     if (!repository) {
       return NextResponse.json({ error: 'Repository not found' }, { status: 404 });

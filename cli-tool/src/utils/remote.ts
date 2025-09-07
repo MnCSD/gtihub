@@ -5,6 +5,46 @@ export interface RemoteConfig {
   name: string;
   url: string;
   repositoryId?: string;
+  username?: string;
+  repoName?: string;
+}
+
+/**
+ * Parse a web URL to extract username and repository name
+ * Format: https://localhost:3000/{username}/{reponame}
+ */
+export function parseWebUrl(url: string): { username: string; repoName: string; baseUrl: string } | null {
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
+    
+    if (pathParts.length >= 2) {
+      return {
+        username: pathParts[0],
+        repoName: pathParts[1],
+        baseUrl: `${urlObj.protocol}//${urlObj.host}`
+      };
+    }
+  } catch (error) {
+    // Invalid URL format
+  }
+  return null;
+}
+
+/**
+ * Convert web URL to API endpoint URL
+ */
+export function getApiUrl(webUrl: string): string {
+  const parsed = parseWebUrl(webUrl);
+  if (parsed) {
+    return `${parsed.baseUrl}/api`;
+  }
+  // Fallback: if it's already an API URL, return as is
+  if (webUrl.includes('/api')) {
+    return webUrl;
+  }
+  // Default API endpoint
+  return `${webUrl}/api`;
 }
 
 /**
@@ -46,10 +86,13 @@ export async function getRemoteConfig(remoteName: string = 'origin'): Promise<Re
     }
     
     if (remoteUrl) {
+      const parsed = parseWebUrl(remoteUrl);
       return {
         name: remoteName,
         url: remoteUrl,
-        repositoryId: repositoryId || undefined
+        repositoryId: repositoryId || (parsed ? `${parsed.username}/${parsed.repoName}` : undefined),
+        username: parsed?.username,
+        repoName: parsed?.repoName
       };
     }
     

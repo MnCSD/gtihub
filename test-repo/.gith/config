@@ -1,9 +1,0 @@
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = false
-	logallrefupdates = true
-
-[remote "origin"]
-	url = http://localhost:3000/api
-	repositoryId = cmf6w39li000l1a6sm29cjt5t

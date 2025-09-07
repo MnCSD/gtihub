@@ -2,7 +2,22 @@ export interface RemoteConfig {
     name: string;
     url: string;
     repositoryId?: string;
+    username?: string;
+    repoName?: string;
 }
+/**
+ * Parse a web URL to extract username and repository name
+ * Format: https://localhost:3000/{username}/{reponame}
+ */
+export declare function parseWebUrl(url: string): {
+    username: string;
+    repoName: string;
+    baseUrl: string;
+} | null;
+/**
+ * Convert web URL to API endpoint URL
+ */
+export declare function getApiUrl(webUrl: string): string;
 /**
  * Get the remote configuration from the local .gith/config
  */

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getGithUser } from "@/lib/gith-config";
 
+console.log("API route file loaded!");
+
 // GET /api/repositories/[id]/commits - Get commits for a repository
 export async function GET(
   request: NextRequest,
@@ -10,8 +12,19 @@ export async function GET(
   try {
     const githUser = await getGithUser();
 
+    console.log("Authenticated gith user:", githUser);
+
     if (!githUser?.email) {
-      return NextResponse.json({ error: "No user configured in gith config. Run: gith config user.email <email>" }, { status: 401 });
+      console.error(
+        "No user configured in gith config. Run: gith config user.email <email>"
+      );
+      return NextResponse.json(
+        {
+          error:
+            "No user configured in gith config. Run: gith config user.email <email>",
+        },
+        { status: 401 }
+      );
     }
 
     // Get user by email to get the ID
@@ -20,18 +33,38 @@ export async function GET(
     });
 
     if (!user) {
+      console.error("User not found for email:", githUser.email);
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const { id } = await params;
 
-    // Verify repository access
-    const repository = await prisma.repository.findFirst({
-      where: {
-        id,
-        ownerId: user.id,
-      },
-    });
+    // Parse repository ID - it can be either a direct ID or username/reponame format
+    let repository;
+    if (id.includes("/")) {
+      // Format: username/reponame
+      const [username, reponame] = id.split("/").map(decodeURIComponent);
+
+      // Use the authenticated user as the owner (ignore username from URL)
+      console.log(
+        `Looking for repository '${reponame}' owned by authenticated user: ${user.email}`
+      );
+
+      repository = await prisma.repository.findFirst({
+        where: {
+          name: reponame,
+          ownerId: user.id,
+        },
+      });
+    } else {
+      // Direct repository ID
+      repository = await prisma.repository.findFirst({
+        where: {
+          id,
+          ownerId: user.id,
+        },
+      });
+    }
 
     if (!repository) {
       return NextResponse.json(
@@ -42,7 +75,7 @@ export async function GET(
 
     const commits = await prisma.commit.findMany({
       where: {
-        repositoryId: id,
+        repositoryId: repository.id,
       },
       include: {
         files: true,
@@ -67,11 +100,20 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log("POST handler called!");
   try {
-    const githUser = await getGithUser();
+    const { id } = await params;
+    const { commits: commitsData, branch = "main", user: githUser } = await request.json();
+
+    console.log("Authenticated gith user from request:", githUser);
 
     if (!githUser?.email) {
-      return NextResponse.json({ error: "No user configured in gith config. Run: gith config user.email <email>" }, { status: 401 });
+      return NextResponse.json(
+        {
+          error: "No user email provided in request",
+        },
+        { status: 401 }
+      );
     }
 
     // Get user by email to get the ID
@@ -83,16 +125,52 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { id } = await params;
-    const { commits: commitsData, branch = "main" } = await request.json();
 
-    // Verify repository access
-    const repository = await prisma.repository.findFirst({
-      where: {
-        id,
-        ownerId: user.id,
-      },
-    });
+    // Parse repository ID - it can be either a direct ID or username/reponame format
+    let repository;
+    if (id.includes("/")) {
+      // Format: username/reponame
+      const [username, reponame] = id.split("/").map(decodeURIComponent);
+
+      // Use the authenticated user as the owner (ignore username from URL)
+      console.log(
+        `Looking for repository '${reponame}' owned by authenticated user: ${user.email}`
+      );
+
+      repository = await prisma.repository.findFirst({
+        where: {
+          name: reponame,
+          ownerId: user.id,
+        },
+      });
+
+      // If repository doesn't exist, create it
+      if (!repository) {
+        repository = await prisma.repository.create({
+          data: {
+            name: reponame,
+            description: `Repository created via gith CLI`,
+            ownerId: user.id,
+          },
+        });
+
+        // Create default main branch
+        await prisma.branch.create({
+          data: {
+            name: "main",
+            repositoryId: repository.id,
+          },
+        });
+      }
+    } else {
+      // Direct repository ID
+      repository = await prisma.repository.findFirst({
+        where: {
+          id,
+          ownerId: user.id,
+        },
+      });
+    }
 
     if (!repository) {
       return NextResponse.json(
@@ -144,7 +222,7 @@ export async function POST(
           timestamp: new Date(timestamp),
           treeHash,
           parentSha,
-          repositoryId: id,
+          repositoryId: repository.id,
         },
       });
 
@@ -172,7 +250,7 @@ export async function POST(
       await prisma.branch.upsert({
         where: {
           repositoryId_name: {
-            repositoryId: id,
+            repositoryId: repository.id,
             name: branch,
           },
         },
@@ -181,14 +259,14 @@ export async function POST(
         },
         create: {
           name: branch,
-          repositoryId: id,
+          repositoryId: repository.id,
           commitSha: latestCommit.sha,
         },
       });
 
       // Update repository updatedAt
       await prisma.repository.update({
-        where: { id },
+        where: { id: repository.id },
         data: { updatedAt: new Date() },
       });
     }
@@ -200,6 +278,7 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error creating commits:", error);
+    console.error("Error details:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
