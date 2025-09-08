@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { getGithUser } from '@/lib/gith-config';
 
 // GET /api/repositories - List user's repositories
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const githUser = await getGithUser();
     
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!githUser?.email) {
+      return NextResponse.json({ error: 'No user configured in gith config. Run: gith config user.email <email>' }, { status: 401 });
     }
 
     // Get user by email to get the ID
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: githUser.email }
     });
 
     if (!user) {
@@ -53,15 +52,15 @@ export async function GET() {
 // POST /api/repositories - Create a new repository
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const githUser = await getGithUser();
     
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!githUser?.email) {
+      return NextResponse.json({ error: 'No user configured in gith config. Run: gith config user.email <email>' }, { status: 401 });
     }
 
     // Get user by email to get the ID
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: githUser.email }
     });
 
     if (!user) {

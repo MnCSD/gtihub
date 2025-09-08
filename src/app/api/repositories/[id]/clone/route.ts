@@ -1,55 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { getGithUser } from '@/lib/gith-config';
 
 // GET /api/repositories/[id]/clone - Get repository data for cloning
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const githUser = await getGithUser();
     
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!githUser?.email) {
+      return NextResponse.json({ error: 'No user configured in gith config. Run: gith config user.email <email>' }, { status: 401 });
     }
 
     // Get user by email to get the ID
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: githUser.email }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
-    // Get repository with all data needed for cloning
-    const repository = await prisma.repository.findFirst({
-      where: {
-        id,
-        ownerId: user.id
-      },
-      include: {
-        owner: {
-          select: {
-            name: true,
-            email: true
-          }
+    // Parse repository ID - it can be either a direct ID or username/reponame format
+    let repository;
+    if (id.includes('/')) {
+      // Format: username/reponame
+      const [username, reponame] = id.split('/').map(decodeURIComponent);
+      
+      // Use the authenticated user as the owner (ignore username from URL)
+      console.log(`Looking for repository '${reponame}' owned by authenticated user: ${user.email}`);
+
+      repository = await prisma.repository.findFirst({
+        where: {
+          name: reponame,
+          ownerId: user.id,
         },
-        branches: true,
-        commits: {
-          include: {
-            files: true
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
           },
-          orderBy: {
-            timestamp: 'asc' // Oldest first for proper recreation
+          branches: true,
+          commits: {
+            include: {
+              files: true
+            },
+            orderBy: {
+              timestamp: 'asc' // Oldest first for proper recreation
+            }
           }
         }
-      }
-    });
+      });
+    } else {
+      // Direct repository ID
+      repository = await prisma.repository.findFirst({
+        where: {
+          id,
+          ownerId: user.id
+        },
+        include: {
+          owner: {
+            select: {
+              name: true,
+              email: true
+            }
+          },
+          branches: true,
+          commits: {
+            include: {
+              files: true
+            },
+            orderBy: {
+              timestamp: 'asc' // Oldest first for proper recreation
+            }
+          }
+        }
+      });
+    }
 
     if (!repository) {
       return NextResponse.json({ error: 'Repository not found' }, { status: 404 });
