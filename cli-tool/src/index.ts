@@ -12,6 +12,7 @@ import { configCommand } from "./commands/config";
 import { logCommand } from "./commands/log";
 import { cloneCommand } from "./commands/clone";
 import { remoteCommand } from "./commands/remote";
+import { pullCommand } from "./commands/pull";
 
 const program = new Command();
 
@@ -41,6 +42,7 @@ grow, mark and tweak your common history
    commit     Record changes to the repository
 
 collaborate
+   pull       Fetch from and integrate with another repository or a local branch
    push       Update remote refs along with associated objects
    remote     Manage set of tracked repositories
 
@@ -66,6 +68,7 @@ program.addCommand(configCommand);
 program.addCommand(logCommand);
 program.addCommand(cloneCommand);
 program.addCommand(remoteCommand);
+program.addCommand(pullCommand);
 
 // Global error handler
 program.exitOverride((err) => {

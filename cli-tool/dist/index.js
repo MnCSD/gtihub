@@ -16,6 +16,7 @@ const config_1 = require("./commands/config");
 const log_1 = require("./commands/log");
 const clone_1 = require("./commands/clone");
 const remote_1 = require("./commands/remote");
+const pull_1 = require("./commands/pull");
 const program = new commander_1.Command();
 program
     .name("gith")
@@ -43,6 +44,7 @@ grow, mark and tweak your common history
    commit     Record changes to the repository
 
 collaborate
+   pull       Fetch from and integrate with another repository or a local branch
    push       Update remote refs along with associated objects
    remote     Manage set of tracked repositories
 
@@ -67,6 +69,7 @@ program.addCommand(config_1.configCommand);
 program.addCommand(log_1.logCommand);
 program.addCommand(clone_1.cloneCommand);
 program.addCommand(remote_1.remoteCommand);
+program.addCommand(pull_1.pullCommand);
 // Global error handler
 program.exitOverride((err) => {
     if (err.code === "commander.unknownCommand") {
