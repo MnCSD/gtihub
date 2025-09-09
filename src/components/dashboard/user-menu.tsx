@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
+import { UserAvatar } from "@/components/ui";
 
 type NavUser = {
   name?: string | null;
@@ -31,8 +31,6 @@ export default function UserMenu({ user }: { user: NavUser }) {
     };
   }, [open]);
 
-  const initial = (user?.name || user?.email || "?").charAt(0).toUpperCase();
-
   return (
     <div className="relative" ref={rootRef}>
       <button
@@ -42,19 +40,7 @@ export default function UserMenu({ user }: { user: NavUser }) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        {user?.image ? (
-          <Image
-            src={user.image}
-            alt={user?.name || user?.email || "User"}
-            width={28}
-            height={28}
-            className="rounded-full border border-white/20"
-          />
-        ) : (
-          <div className="size-8 rounded-full bg-white/10 text-white flex items-center justify-center font-semibold">
-            {initial}
-          </div>
-        )}
+        <UserAvatar user={user} size={28} />
       </button>
 
       {open && (
@@ -63,19 +49,7 @@ export default function UserMenu({ user }: { user: NavUser }) {
           className="absolute right-0 mt-2 w-72 rounded-xl border border-white/15 bg-[#0d1117] shadow-xl text-sm text-white/90 overflow-hidden z-50"
         >
           <div className="px-3 py-3 flex items-center gap-3">
-            {user?.image ? (
-              <Image
-                src={user.image}
-                alt={user?.name || user?.email || "User"}
-                width={32}
-                height={32}
-                className="rounded-full border border-white/20"
-              />
-            ) : (
-              <div className="size-8 rounded-full bg-white/10 text-white flex items-center justify-center font-semibold">
-                {initial}
-              </div>
-            )}
+            <UserAvatar user={user} size={32} />
             <div className="font-semibold truncate">{user?.name || user?.email || "User"}</div>
           </div>
           <div className="border-t border-white/10" />

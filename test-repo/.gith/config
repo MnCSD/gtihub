@@ -1,0 +1,8 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+
+[remote "origin"]
+	url = http://localhost:3000/MnCSD/test-repo

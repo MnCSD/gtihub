@@ -22,9 +22,20 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase() },
+        const loginField = credentials.email.toLowerCase();
+        
+        // Try to find user by email first, then by name (username)
+        let user = await prisma.user.findUnique({
+          where: { email: loginField },
         });
+        
+        // If not found by email, try by name (username)
+        if (!user) {
+          user = await prisma.user.findFirst({
+            where: { name: { equals: credentials.email, mode: 'insensitive' } },
+          });
+        }
+        
         if (!user || !user.passwordHash) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
@@ -37,14 +48,22 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // Persist the user id to the token on sign-in
-      if (user) token.sub = user.id;
+      // Persist the user data to the token on sign-in
+      if (user) {
+        token.sub = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.image; // NextAuth uses 'picture' for images in JWT
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token?.sub) {
-        // @ts-expect-error augment user id
+        // @ts-expect-error augment user id and image
         session.user.id = token.sub;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.picture;
       }
       return session;
     },

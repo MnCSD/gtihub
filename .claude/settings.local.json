@@ -93,7 +93,11 @@
       "Bash(gith remote set-url origin \"http://localhost:3001/Marios%20Nikolopoulos/my-project\")",
       "Bash(gith remote set-url origin \"http://localhost:3001/Marios%20Nikolopoylos/my-project\")",
       "Bash(gith remote set-url origin \"http://localhost:3001/marios/my-project\")",
-      "Bash(PORT=3001 npm run dev)"
+      "Bash(PORT=3001 npm run dev)",
+      "Bash(gith add README.md app.js)",
+      "Bash(gith commit -m \"Initial commit by MnCSD with README and app.js\")",
+      "Bash(gith remote add origin \"http://localhost:3000/MnCSD/test-repo\")",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

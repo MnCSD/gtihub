@@ -1,13 +1,5 @@
-type RepoCardProps = {
-  name: string;
-  description?: string;
-  language?: string;
-  stars?: string | number;
-  rightAction?: React.ReactNode;
-  compact?: boolean;
-};
-
 import { getLanguageColor } from "@/lib/languageColors";
+import { RepoCardProps } from '@/types';
 
 export default function RepoCard({
   name,

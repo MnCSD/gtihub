@@ -1,38 +1,11 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+import { SignupForm } from '@/components/auth';
+import { Logo } from '@/components/ui';
 
 export default function SignupPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Signup failed");
-      await signIn("credentials", { email, password, redirect: true, callbackUrl: "/" });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <main className="min-h-screen bg-white text-[#0d1117]">
       {/* Two column layout */}
@@ -111,143 +84,10 @@ export default function SignupPage() {
             </Link>
           </div>
 
-          <div className="w-full max-w-md">
-            <h2 className="text-2xl font-semibold mb-5">Sign up for GitHub</h2>
-
-            {/* Google OAuth button */}
-            <button className="w-full h-10 rounded-md bg-white border border-black/10 shadow-sm flex items-center justify-center gap-2 text-sm font-medium">
-              <GoogleIcon /> Continue with Google
-            </button>
-
-            {/* Divider */}
-            <div className="my-5 flex items-center gap-4 text-black/50">
-              <div className="h-px flex-1 bg-black/10" />
-              <span className="text-xs">or</span>
-              <div className="h-px flex-1 bg-black/10" />
-            </div>
-
-            <form className="space-y-4" onSubmit={onSubmit}>
-              <Field label="Email" type="email" placeholder="Email" value={email} onChange={setEmail} />
-              <Field
-                label="Password"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={setPassword}
-                help="Password should be at least 8 characters including a number and a lowercase letter."
-              />
-              <Field
-                label="Name"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={setName}
-              />
-
-              {/* Country/Region */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Your Country/Region
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select className="w-full h-11 rounded-md border border-black/10 bg-white px-3 pr-8 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-black/10">
-                    <option>Greece</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                    <option>India</option>
-                    <option>Other</option>
-                  </select>
-                  <svg
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-black/60"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden
-                  >
-                    <path d="M5.75 7.75L10 12l4.25-4.25" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <p className="mt-1.5 text-xs text-black/60">
-                  For compliance reasons, we&apos;re required to collect country information to send you occasional updates and announcements.
-                </p>
-              </div>
-
-              {/* Email preferences */}
-              <label className="mt-2 flex items-start gap-2 text-sm">
-                <input type="checkbox" className="mt-1 size-4 rounded border border-black/20" />
-                <span>Receive occasional product updates and announcements</span>
-              </label>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 w-full h-11 rounded-md bg-black text-white font-semibold hover:bg-black/90 disabled:opacity-60"
-              >
-                {loading ? "Creating..." : "Create account"}
-                <span aria-hidden> →</span>
-              </button>
-
-              {error && <p className="text-sm text-red-600">{error}</p>}
-
-              <p className="text-xs text-black/60 leading-relaxed mt-3">
-                By creating an account, you agree to the Terms of Service. For more information about GitHub&apos;s privacy practices, see the GitHub Privacy Statement.
-              </p>
-            </form>
-          </div>
+          <SignupForm />
         </section>
       </div>
     </main>
   );
 }
 
-function Field({
-  label,
-  type,
-  placeholder,
-  help,
-  value,
-  onChange,
-}: {
-  label: string;
-  type: string;
-  placeholder: string;
-  help?: string;
-  value?: string;
-  onChange?: (v: string) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        {label}
-        <span className="text-red-500">*</span>
-      </label>
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-full h-11 rounded-md border border-black/10 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
-      {help && <p className="mt-1.5 text-xs text-black/60">{help}</p>}
-    </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 48 48"
-      aria-hidden
-    >
-      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.746 32.658 29.248 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C33.64 6.053 29.082 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-      <path fill="#FF3D00" d="M6.306 14.691l6.571 4.817C14.655 16.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C33.64 6.053 29.082 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.197l-6.191-5.238C29.21 35.091 26.735 36 24 36c-5.224 0-9.712-3.317-11.292-7.946l-6.54 5.036C9.467 39.556 16.227 44 24 44z"/>
-      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.02 12.02 0 01-4.095 5.565l.003-.002 6.191 5.238C36.888 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-    </svg>
-  );
-}
