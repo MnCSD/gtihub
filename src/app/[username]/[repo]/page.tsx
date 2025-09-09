@@ -9,6 +9,8 @@ import {
   ChevronDownIcon,
   Code,
   CodeIcon,
+  File,
+  Folder,
   LucideClockFading,
   PinIcon,
   StarIcon,
@@ -423,12 +425,16 @@ export default async function RepositoryPage({ params }: PageParams) {
                 }`}
               >
                 <span className="w-4 text-center text-white/60">
-                  {item.type === "dir" ? "📁" : "📄"}
+                  {item.type === "dir" ? (
+                    <Folder size={20} color="gray" fill="gray" />
+                  ) : (
+                    <File size={20} color="gray" />
+                  )}
                 </span>
                 <div className="flex-1 min-w-0">
                   <Link
                     href="#"
-                    className="text-[#58a6ff] hover:underline text-sm font-medium"
+                    className="text-white hover:underline text-sm hover:text-[#58a6ff]"
                   >
                     {item.name}
                   </Link>
