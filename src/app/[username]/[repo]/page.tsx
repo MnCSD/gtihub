@@ -13,6 +13,7 @@ import {
   Folder,
   LucideClockFading,
   PinIcon,
+  Settings,
   StarIcon,
   TagIcon,
 } from "lucide-react";
@@ -301,12 +302,12 @@ export default async function RepositoryPage({ params }: PageParams) {
           </div>
 
           {/* Commit info bar */}
-          <div className="flex items-center gap-3 p-4 bg-[#151B23] border border-white/20 rounded-t-md">
+          <div className="flex items-center gap-3 p-3.5 bg-[#151B23] border border-white/20 rounded-t-md">
             <UserAvatar user={navUser} size={20} />
             <div className="flex-1 min-w-0">
               <div className="flex gap-2 items-center">
                 <div className=" text-white">
-                  <span className="font-medium">
+                  <span className="font-medium text-sm">
                     {latestCommit?.authorName || username}
                   </span>
                 </div>
@@ -314,13 +315,13 @@ export default async function RepositoryPage({ params }: PageParams) {
                   href="#"
                   className="text-white/60 hover:underline text-sm"
                 >
-                  Merge pull request
+                  Merge pull request{" "}
                   <span
                     className="
                   text-[#58a6ff]"
                   >
                     #17
-                  </span>
+                  </span>{" "}
                   from {username}/18-bug-fixes
                 </Link>
               </div>
@@ -453,51 +454,129 @@ export default async function RepositoryPage({ params }: PageParams) {
         </div>
 
         {/* Right sidebar */}
-        <aside className="space-y-6">
+        <aside className="space-y-4">
           {/* About */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-lg font-semibold">About</h2>
-              <button className="text-white/60 hover:text-white">⚙️</button>
+          <div className=" border-b pb-4 border-white/20 ">
+            <div className="flex items-center gap-2 mb-3 justify-between">
+              <h2 className=" font-semibold">About</h2>
+              <button className="text-white/60 hover:text-white">
+                <Settings size={16} />
+              </button>
             </div>
             <p className="text-sm text-white/60 mb-4 italic">
               {description || "No description, website, or topics provided."}
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span>📖</span>
+                <span>
+                  <svg
+                    aria-hidden="true"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    version="1.1"
+                    width="16"
+                    data-view-component="true"
+                    fill="gray"
+                  >
+                    <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"></path>
+                  </svg>
+                </span>
                 <Link
                   href="#"
-                  className="text-[#58a6ff] hover:underline text-sm"
+                  className="
+                 text-white/50
+                  hover:text-[#58a6ff]
+                  text-sm"
                 >
                   Readme
                 </Link>
               </div>
 
               <div className="flex items-center gap-2">
-                <span>📊</span>
+                <span>
+                  <svg
+                    aria-hidden="true"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    version="1.1"
+                    width="16"
+                    data-view-component="true"
+                    fill="gray"
+                  >
+                    <path d="M6 2c.306 0 .582.187.696.471L10 10.731l1.304-3.26A.751.751 0 0 1 12 7h3.25a.75.75 0 0 1 0 1.5h-2.742l-1.812 4.528a.751.751 0 0 1-1.392 0L6 4.77 4.696 8.03A.75.75 0 0 1 4 8.5H.75a.75.75 0 0 1 0-1.5h2.742l1.812-4.529A.751.751 0 0 1 6 2Z"></path>
+                  </svg>
+                </span>
                 <Link
                   href="#"
-                  className="text-[#58a6ff] hover:underline text-sm"
+                  className="
+                 text-white/50
+                  hover:text-[#58a6ff]
+                  text-sm"
                 >
                   Activity
                 </Link>
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-white/60">
-                <div className="flex items-center gap-1">
-                  <span>⭐</span>
-                  <span>0 stars</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>👀</span>
-                  <span>0 watching</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>🔀</span>
-                  <span>0 forks</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span>
+                  <StarIcon size={16} color="gray" />
+                </span>
+                <span
+                  className="
+                  text-white/50
+                  hover:text-[#58a6ff]
+                  text-sm"
+                >
+                  0 stars
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>
+                  <svg
+                    aria-hidden="true"
+                    focusable="false"
+                    viewBox="0 0 16 16"
+                    width="16"
+                    height="16"
+                    fill="gray"
+                    display="inline-block"
+                    overflow="visible"
+                  >
+                    <path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"></path>
+                  </svg>
+                </span>
+                <span
+                  className="
+                  text-white/50
+                  hover:text-[#58a6ff]
+                  text-sm"
+                >
+                  0 watching
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>
+                  <svg
+                    aria-hidden="true"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    version="1.1"
+                    width="16"
+                    data-view-component="true"
+                    fill="gray"
+                  >
+                    <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"></path>
+                  </svg>
+                </span>
+                <span
+                  className="
+                  text-white/50
+                  hover:text-[#58a6ff]
+                  text-sm"
+                >
+                  0 forks
+                </span>
               </div>
             </div>
           </div>
@@ -505,7 +584,7 @@ export default async function RepositoryPage({ params }: PageParams) {
           {/* Releases */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Releases</h3>
+              <h3 className="font-semibold text-[15px]">Releases</h3>
             </div>
             <p className="text-sm text-white/60 mb-2">No releases published</p>
             <Link href="#" className="text-[#58a6ff] hover:underline text-sm">
@@ -556,27 +635,6 @@ export default async function RepositoryPage({ params }: PageParams) {
           </div>
 
           {/* Suggested workflows */}
-          <div>
-            <h3 className="font-semibold mb-3">Suggested workflows</h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-[#21262d] border border-white/10 rounded flex items-center justify-center">
-                  ⚛️
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium mb-1">
-                    Deploy Next.js to Pages
-                  </h4>
-                  <p className="text-xs text-white/60 mb-2">
-                    Build and deploy a Next.js site to GitHub Pages
-                  </p>
-                  <button className="text-xs bg-[#238636] hover:bg-[#2ea043] px-3 py-1.5 rounded">
-                    Configure
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </aside>
       </div>
     </div>
