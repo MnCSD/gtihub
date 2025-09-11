@@ -219,10 +219,3 @@ Configure in `web/oidcConfig.ts`:
 ```
 
 ```
-
-
-## Testing Changes
-
-This is a test modification to verify that gith status correctly detects changes.
-The file has been modified locally and should show as modified in gith status.
-

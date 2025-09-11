@@ -2,22 +2,17 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Navbar from "@/components/dashboard/navbar";
-import UserAvatar from "@/components/ui/user-avatar";
-import Link from "next/link";
-import {
-  ChevronDown,
-  ChevronDownIcon,
-  Code,
-  CodeIcon,
-  File,
-  Folder,
-  LucideClockFading,
-  PinIcon,
-  Settings,
-  StarIcon,
-  TagIcon,
-} from "lucide-react";
+import { CodeIcon } from "lucide-react";
 import { Metadata } from "next";
+import {
+  NavigationTabs,
+  RepositoryHeader,
+  FileBrowser,
+  ReadmeSection,
+  RepositorySidebar,
+  FileItem,
+  NavigationTab,
+} from "@/components/features/repository";
 
 type PageParams = {
   params: Promise<{ username: string; repo: string }>;
@@ -49,6 +44,13 @@ function formatRelative(date: Date) {
   return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
+
+// Navigation tabs configuration
+const navigationTabs: NavigationTab[] = [
+  { label: "Code", icon: <CodeIcon size={16} />, active: true },
+  { label: "Issues", icon: "⚠", count: null },
+];
+
 export default async function RepositoryPage({ params }: PageParams) {
   const { username, repo } = await params;
 
@@ -66,576 +68,242 @@ export default async function RepositoryPage({ params }: PageParams) {
     displayText: `${username}/${repo}`,
   };
 
-  // Try to locate the repository for the signed-in user
-  let dbRepo: any = null;
+  // Try to locate the repository for the specified username
+  let dbRepo: {
+    isPrivate?: boolean;
+    description?: string | null;
+    branches: Array<{ id: string; name: string }>;
+    commits: Array<{
+      message: string;
+      timestamp: Date;
+      authorName: string;
+      sha: string;
+      files?: Array<{
+        path: string;
+        content: string;
+        action: string;
+      }>;
+    }>;
+  } | null = null;
   let branchesCount = 0;
+  let commitsCount = 0;
   let latestCommit: {
     message: string;
     timestamp: Date;
     authorName: string;
+    sha: string;
   } | null = null;
+  let repoFiles: Array<{
+    name: string;
+    type: "file" | "dir";
+    path: string;
+    lastCommitMessage?: string;
+    lastCommitDate?: Date;
+  }> = [];
+  let readmeContent = "";
 
-  if (session?.user?.email) {
-    const owner = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (owner) {
-      const repoData = await prisma.repository.findFirst({
-        where: { ownerId: owner.id, name: repo },
+  // Find the repository owner by username (could be name or part of email)
+  const repoOwner = await prisma.user.findFirst({
+    where: { 
+      OR: [
+        { name: { equals: username, mode: 'insensitive' } },
+        { email: { contains: username, mode: 'insensitive' } }
+      ]
+    },
+  });
+
+  if (repoOwner) {
+    const [repoData, totalCommits] = await Promise.all([
+      prisma.repository.findFirst({
+        where: { ownerId: repoOwner.id, name: repo },
         include: {
           branches: true,
-          commits: { orderBy: { timestamp: "desc" }, take: 1 },
+          commits: { 
+            orderBy: { timestamp: "desc" }, 
+            take: 1,
+            include: {
+              files: true
+            }
+          },
         },
-      });
-      if (repoData) {
-        dbRepo = repoData as any;
-        branchesCount = repoData.branches.length;
-        if (repoData.commits[0]) {
-          latestCommit = {
-            message: repoData.commits[0].message,
-            timestamp: repoData.commits[0].timestamp,
-            authorName: repoData.commits[0].authorName,
-          };
+      }),
+      prisma.commit.count({
+        where: {
+          repository: {
+            ownerId: repoOwner.id,
+            name: repo
+          }
+        }
+      })
+    ]);
+    
+    if (repoData) {
+      dbRepo = repoData;
+      branchesCount = repoData.branches.length;
+      commitsCount = totalCommits;
+      
+      if (repoData.commits[0]) {
+        latestCommit = {
+          message: repoData.commits[0].message,
+          timestamp: repoData.commits[0].timestamp,
+          authorName: repoData.commits[0].authorName,
+          sha: repoData.commits[0].sha,
+        };
+
+        // Get all files from all commits to build current repository state
+        const allCommitFiles = await prisma.commitFile.findMany({
+          where: {
+            commit: {
+              repositoryId: repoData.id,
+            },
+          },
+          include: {
+            commit: true,
+          },
+          orderBy: {
+            commit: {
+              timestamp: 'desc',
+            },
+          },
+        });
+
+        // Build current repository state (latest version of each file)
+        const currentFiles = new Map<string, {
+          path: string;
+          content: string;
+          action: string;
+          lastCommitMessage: string;
+          lastCommitDate: Date;
+        }>();
+
+        // Process files in reverse chronological order (newest first)
+        allCommitFiles.forEach(file => {
+          if (!currentFiles.has(file.path)) {
+            // Only add if we haven't seen this file path yet (keeps the latest version)
+            currentFiles.set(file.path, {
+              path: file.path,
+              content: file.content,
+              action: file.action,
+              lastCommitMessage: file.commit.message,
+              lastCommitDate: file.commit.timestamp,
+            });
+          }
+        });
+        
+        // Process files to create directory structure for root level display
+        const fileMap = new Map<string, {
+          name: string;
+          type: "file" | "dir";
+          path: string;
+          lastCommitMessage?: string;
+          lastCommitDate?: Date;
+        }>();
+
+        currentFiles.forEach(file => {
+          if (file.action !== "deleted") {
+            const pathParts = file.path.split('/');
+            
+            if (pathParts.length === 1) {
+              // Root level file
+              fileMap.set(file.path, {
+                name: pathParts[0],
+                type: "file",
+                path: file.path,
+                lastCommitMessage: file.lastCommitMessage,
+                lastCommitDate: file.lastCommitDate,
+              });
+            } else {
+              // File in subdirectory - add the top-level directory
+              const topDirName = pathParts[0];
+              if (!fileMap.has(topDirName)) {
+                fileMap.set(topDirName, {
+                  name: topDirName,
+                  type: "dir",
+                  path: topDirName,
+                  lastCommitMessage: file.lastCommitMessage,
+                  lastCommitDate: file.lastCommitDate,
+                });
+              }
+            }
+          }
+        });
+
+        // Convert to array and sort (directories first, then files)
+        repoFiles = Array.from(fileMap.values())
+          .sort((a, b) => {
+            if (a.type === b.type) {
+              return a.name.localeCompare(b.name);
+            }
+            return a.type === "dir" ? -1 : 1;
+          });
+
+        // Find README content from current files
+        const readmeFile = Array.from(currentFiles.values()).find(file => 
+          file.path.toLowerCase() === 'readme.md' && file.action !== "deleted"
+        );
+        if (readmeFile) {
+          readmeContent = readmeFile.content;
+        } else {
+          // Fallback to default content if no README found
+          readmeContent = `# ${repo}
+
+This repository doesn't have a README.md file yet.
+
+## Getting Started
+
+Welcome to ${repo}! This project is managed using our custom Git implementation.
+
+## Contributing
+
+Feel free to contribute to this project by submitting pull requests.`;
         }
       }
     }
   }
 
-  const isPrivate = dbRepo?.isPrivate ?? false;
-  const description = dbRepo?.description ?? null;
+  // Repository data preparation
+  const repositoryInfo = {
+    username,
+    repo,
+    isPrivate: dbRepo?.isPrivate ?? false,
+    description: dbRepo?.description ?? null,
+    branchesCount,
+  };
+
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
       <Navbar user={navUser} repositoryInfo={repoDisplayInfo} />
 
-      {/* Navigation tabs - full width, right below navbar */}
-      <div className="border-b border-white/20 bg-[#010409]">
-        <div className="w-full px-4 py-0 sm:px-6 lg:px-4">
-          <nav className="flex gap-8 text-sm mx-auto">
-            {[
-              { label: "Code", icon: <CodeIcon size={16} />, active: true },
-              { label: "Issues", icon: "⚠", count: null },
-            ].map((tab) => (
-              <div
-                key={tab.label}
-                className={`flex items-center gap-2 py-4 border-b-2 whitespace-nowrap ${
-                  tab.active
-                    ? "text-white border-[#fd7e14]"
-                    : "text-white/70 border-transparent hover:text-white hover:border-white/20"
-                }`}
-              >
-                <span className="text-xs opacity-70">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </div>
-            ))}
-          </nav>
-        </div>
-      </div>
+      {/* Navigation tabs */}
+      <NavigationTabs tabs={navigationTabs} />
 
-      {/* Repo header section */}
-      <div
-        className="max-w-[1260px] mx-auto px-4 py-4 border-b 
-      border-white/20 mb-6
-      "
-      >
-        <div className="flex items-start justify-between gap-6">
-          {/* Left: Repo info */}
-          <div className="flex items-center gap-3 min-w-0">
-            <UserAvatar user={navUser} size={28} />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-xl font-semibold">
-                <span className="font-semibold">{repo}</span>
-                <span className="ml-3 text-xs border border-white/30 rounded-full px-2 py-1 text-white/80 font-normal">
-                  {isPrivate ? "Private" : "Public"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Action buttons */}
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 px-3 py-1.5 text-xs border border-white/20 rounded-md bg-[#21262d] hover:bg-white/10">
-              <span>
-                <svg
-                  aria-hidden="true"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  version="1.1"
-                  width="16"
-                  data-view-component="true"
-                  fill="gray"
-                >
-                  <path d="m11.294.984 3.722 3.722a1.75 1.75 0 0 1-.504 2.826l-1.327.613a3.089 3.089 0 0 0-1.707 2.084l-.584 2.454c-.317 1.332-1.972 1.8-2.94.832L5.75 11.311 1.78 15.28a.749.749 0 1 1-1.06-1.06l3.969-3.97-2.204-2.204c-.968-.968-.5-2.623.832-2.94l2.454-.584a3.08 3.08 0 0 0 2.084-1.707l.613-1.327a1.75 1.75 0 0 1 2.826-.504ZM6.283 9.723l2.732 2.731a.25.25 0 0 0 .42-.119l.584-2.454a4.586 4.586 0 0 1 2.537-3.098l1.328-.613a.25.25 0 0 0 .072-.404l-3.722-3.722a.25.25 0 0 0-.404.072l-.613 1.328a4.584 4.584 0 0 1-3.098 2.537l-2.454.584a.25.25 0 0 0-.119.42l2.731 2.732Z"></path>
-                </svg>
-              </span>
-              <span>Pin</span>
-            </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-xs border border-white/20 rounded-md bg-[#21262d] hover:bg-white/10">
-              <span>
-                <svg
-                  aria-hidden="true"
-                  focusable="false"
-                  viewBox="0 0 16 16"
-                  width="16"
-                  height="16"
-                  fill="gray"
-                  display="inline-block"
-                  overflow="visible"
-                >
-                  <path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"></path>
-                </svg>
-              </span>
-              <span>Watch</span>
-              <span className="bg-white/20 px-1.5 py-0.5 rounded-full min-w-[16px] text-center ml-1">
-                0
-              </span>
-            </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-xs border border-white/20 rounded-md bg-[#21262d] hover:bg-white/10">
-              <span>
-                <svg
-                  aria-hidden="true"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  version="1.1"
-                  width="16"
-                  data-view-component="true"
-                  fill="gray"
-                >
-                  <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"></path>
-                </svg>
-              </span>
-              <span>Fork</span>
-              <span className="bg-white/20 px-1.5 py-0.5 rounded-full min-w-[16px] text-center ml-1">
-                0
-              </span>
-            </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-xs border border-white/20 rounded-md bg-[#21262d] hover:bg-white/10">
-              <span>
-                <StarIcon size={16} color="gray" />
-              </span>
-              <span>Star</span>
-              <span className="bg-white/20 px-1.5 py-0.5 rounded-full min-w-[16px] text-center ml-1">
-                0
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Repository header */}
+      <RepositoryHeader repository={repositoryInfo} user={navUser} />
 
       {/* Content area */}
       <div className="max-w-[1260px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        {/* Left: file browser */}
+        {/* Left: file browser and README */}
         <div>
-          {/* File browser header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <button className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/20 rounded-md bg-[#21262d] hover:bg-white/10">
-                <span>
-                  <svg
-                    aria-hidden="true"
-                    focusable="false"
-                    viewBox="0 0 16 16"
-                    width="16"
-                    height="16"
-                    fill="gray"
-                    display="inline-block"
-                    overflow="visible"
-                  >
-                    <path d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.493 2.493 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"></path>
-                  </svg>
-                </span>
-                <span>main</span>
-                <span className="text-xs">
-                  <ChevronDownIcon size={14} />
-                </span>
-              </button>
-              <div className="flex items-center gap-4 text-sm text-white/70">
-                <div className="flex items-center gap-1">
-                  <svg
-                    aria-hidden="true"
-                    focusable="false"
-                    viewBox="0 0 16 16"
-                    width="16"
-                    height="16"
-                    fill="gray"
-                    display="inline-block"
-                    overflow="visible"
-                  >
-                    <path d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.493 2.493 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"></path>
-                  </svg>
-                  <span>
-                    <span className="text-white">{branchesCount} </span>
-                    Branches
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <TagIcon size={14} />
-                  <span>
-                    <span className="text-white">0 </span>
-                    Tags
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                placeholder="Go to file"
-                className="h-8 w-64 rounded-md bg-transparent border border-white/30 px-3 text-sm placeholder:text-white/50 focus:outline-none focus:border-[#58a6ff]"
-              />
-              <button className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/20 rounded-md bg-white/10">
-                <span>Add file</span>
-                <span className="text-xs">
-                  <ChevronDownIcon size={14} />
-                </span>
-              </button>
-              <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-[#238636] hover:bg-[#2ea043] rounded-md">
-                <span>
-                  <CodeIcon size={16} color="white" />
-                </span>
-                <span>Code</span>
-                <span className="text-xs">
-                  <ChevronDownIcon size={14} />
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Commit info bar */}
-          <div className="flex items-center gap-3 p-3.5 bg-[#151B23] border border-white/20 rounded-t-md">
-            <UserAvatar user={navUser} size={20} />
-            <div className="flex-1 min-w-0">
-              <div className="flex gap-2 items-center">
-                <div className=" text-white">
-                  <span className="font-medium text-sm">
-                    {latestCommit?.authorName || username}
-                  </span>
-                </div>
-                <Link
-                  href="#"
-                  className="text-white/60 hover:underline text-sm"
-                >
-                  Merge pull request{" "}
-                  <span
-                    className="
-                  text-[#58a6ff]"
-                  >
-                    #17
-                  </span>{" "}
-                  from {username}/18-bug-fixes
-                </Link>
-              </div>
-            </div>
-            <div className="text-xs text-white/60">
-              <span>4b2b5d6 • 3 months ago</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span>
-                <LucideClockFading size={20} color={"gray"} />
-              </span>
-              <span>37 Commits</span>
-            </div>
-          </div>
-
-          {/* File list */}
-          <div className="border border-white/20 rounded-md overflow-hidden">
-            {[
-              {
-                name: "prisma",
-                type: "dir",
-                commit: "17:billing",
-                updated: "3 months ago",
-              },
-              {
-                name: "public",
-                type: "dir",
-                commit: "15: theme",
-                updated: "3 months ago",
-              },
-              {
-                name: "sandbox-templates/nextjs",
-                type: "dir",
-                commit: "06: e2b-sandbox",
-                updated: "3 months ago",
-              },
-              {
-                name: "src",
-                type: "dir",
-                commit: "18: bug-fixes",
-                updated: "3 months ago",
-              },
-              {
-                name: ".gitignore",
-                type: "file",
-                commit: "02: database",
-                updated: "3 months ago",
-              },
-              {
-                name: "README.md",
-                type: "file",
-                commit: "Initial commit from Create Next App",
-                updated: "3 months ago",
-              },
-              {
-                name: "components.json",
-                type: "file",
-                commit: "01:setup",
-                updated: "3 months ago",
-              },
-              {
-                name: "eslint.config.mjs",
-                type: "file",
-                commit: "Initial commit from Create Next App",
-                updated: "3 months ago",
-              },
-              {
-                name: "next.config.ts",
-                type: "file",
-                commit: "Initial commit from Create Next App",
-                updated: "3 months ago",
-              },
-              {
-                name: "package-lock.json",
-                type: "file",
-                commit: "18: bug-fixes",
-                updated: "3 months ago",
-              },
-              {
-                name: "package.json",
-                type: "file",
-                commit: "18: bug-fixes",
-                updated: "3 months ago",
-              },
-              {
-                name: "postcss.config.mjs",
-                type: "file",
-                commit: "Initial commit from Create Next App",
-                updated: "3 months ago",
-              },
-              {
-                name: "tsconfig.json",
-                type: "file",
-                commit: "Initial commit from Create Next App",
-                updated: "3 months ago",
-              },
-            ].map((item, index) => (
-              <div
-                key={item.name}
-                className={`flex items-center gap-3 p-3 py-2 hover:bg-white/[0.03] ${
-                  index > 0 ? "border-t border-white/20" : ""
-                }`}
-              >
-                <span className="w-4 text-center text-white/60">
-                  {item.type === "dir" ? (
-                    <Folder size={20} color="gray" fill="gray" />
-                  ) : (
-                    <File size={20} color="gray" />
-                  )}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href="#"
-                    className="text-white hover:underline text-sm hover:text-[#58a6ff]"
-                  >
-                    {item.name}
-                  </Link>
-                </div>
-                <div className="text-sm text-white/60 min-w-0 max-w-[200px] truncate">
-                  <Link href="#" className="hover:underline">
-                    {item.commit}
-                  </Link>
-                </div>
-                <div className="text-xs text-white/60 w-24 text-right">
-                  {item.updated}
-                </div>
-              </div>
-            ))}
-          </div>
+          <FileBrowser 
+            user={navUser}
+            username={username}
+            commit={latestCommit}
+            files={repoFiles.map(file => ({
+              name: file.name,
+              type: file.type,
+              commit: file.lastCommitMessage || "Initial commit",
+              updated: file.lastCommitDate ? formatRelative(file.lastCommitDate) : "unknown"
+            }))}
+            branchesCount={branchesCount}
+            commitsCount={commitsCount}
+          />
+          
+          <ReadmeSection content={readmeContent} />
         </div>
 
         {/* Right sidebar */}
-        <aside className="space-y-4">
-          {/* About */}
-          <div className=" border-b pb-4 border-white/20 ">
-            <div className="flex items-center gap-2 mb-3 justify-between">
-              <h2 className=" font-semibold">About</h2>
-              <button className="text-white/60 hover:text-white">
-                <Settings size={16} />
-              </button>
-            </div>
-            <p className="text-sm text-white/60 mb-4 italic">
-              {description || "No description, website, or topics provided."}
-            </p>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span>
-                  <svg
-                    aria-hidden="true"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    version="1.1"
-                    width="16"
-                    data-view-component="true"
-                    fill="gray"
-                  >
-                    <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"></path>
-                  </svg>
-                </span>
-                <Link
-                  href="#"
-                  className="
-                 text-white/50
-                  hover:text-[#58a6ff]
-                  text-sm"
-                >
-                  Readme
-                </Link>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span>
-                  <svg
-                    aria-hidden="true"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    version="1.1"
-                    width="16"
-                    data-view-component="true"
-                    fill="gray"
-                  >
-                    <path d="M6 2c.306 0 .582.187.696.471L10 10.731l1.304-3.26A.751.751 0 0 1 12 7h3.25a.75.75 0 0 1 0 1.5h-2.742l-1.812 4.528a.751.751 0 0 1-1.392 0L6 4.77 4.696 8.03A.75.75 0 0 1 4 8.5H.75a.75.75 0 0 1 0-1.5h2.742l1.812-4.529A.751.751 0 0 1 6 2Z"></path>
-                  </svg>
-                </span>
-                <Link
-                  href="#"
-                  className="
-                 text-white/50
-                  hover:text-[#58a6ff]
-                  text-sm"
-                >
-                  Activity
-                </Link>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span>
-                  <StarIcon size={16} color="gray" />
-                </span>
-                <span
-                  className="
-                  text-white/50
-                  hover:text-[#58a6ff]
-                  text-sm"
-                >
-                  0 stars
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>
-                  <svg
-                    aria-hidden="true"
-                    focusable="false"
-                    viewBox="0 0 16 16"
-                    width="16"
-                    height="16"
-                    fill="gray"
-                    display="inline-block"
-                    overflow="visible"
-                  >
-                    <path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"></path>
-                  </svg>
-                </span>
-                <span
-                  className="
-                  text-white/50
-                  hover:text-[#58a6ff]
-                  text-sm"
-                >
-                  0 watching
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>
-                  <svg
-                    aria-hidden="true"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    version="1.1"
-                    width="16"
-                    data-view-component="true"
-                    fill="gray"
-                  >
-                    <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"></path>
-                  </svg>
-                </span>
-                <span
-                  className="
-                  text-white/50
-                  hover:text-[#58a6ff]
-                  text-sm"
-                >
-                  0 forks
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Releases */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-[15px]">Releases</h3>
-            </div>
-            <p className="text-sm text-white/60 mb-2">No releases published</p>
-            <Link href="#" className="text-[#58a6ff] hover:underline text-sm">
-              Create a new release
-            </Link>
-          </div>
-
-          {/* Packages */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Packages</h3>
-            </div>
-            <p className="text-sm text-white/60 mb-2">No packages published</p>
-            <Link href="#" className="text-[#58a6ff] hover:underline text-sm">
-              Publish your first package
-            </Link>
-          </div>
-
-          {/* Languages */}
-          <div>
-            <h3 className="font-semibold mb-3">Languages</h3>
-            <div className="space-y-2">
-              <div className="h-2 w-full rounded overflow-hidden bg-white/10">
-                <div className="h-full flex">
-                  <div
-                    className="bg-[#3178c6]"
-                    style={{ width: "95.2%" }}
-                  ></div>
-                  <div className="bg-[#563d7c]" style={{ width: "4.2%" }}></div>
-                  <div className="bg-[#f1e05a]" style={{ width: "0.6%" }}></div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-xs text-white/60">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-[#3178c6]"></div>
-                  <span>TypeScript 95.2%</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-[#563d7c]"></div>
-                  <span>CSS 4.2%</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-[#f1e05a]"></div>
-                  <span>Other 0.6%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Suggested workflows */}
-        </aside>
+        <RepositorySidebar description={repositoryInfo.description} />
       </div>
     </div>
   );

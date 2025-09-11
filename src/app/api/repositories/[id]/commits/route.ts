@@ -228,16 +228,53 @@ export async function POST(
 
       // Create commit files
       if (files && Array.isArray(files)) {
-        await prisma.commitFile.createMany({
-          data: files.map((file: any) => ({
-            commitId: commit.id,
-            path: file.path,
-            content: file.content,
-            hash: file.hash,
-            mode: file.mode || "100644",
-            action: file.action || "added",
-          })),
-        });
+        for (const file of files) {
+          // Check if this file already exists in any commit for this repository
+          const existingFile = await prisma.commitFile.findFirst({
+            where: {
+              path: file.path,
+              commit: {
+                repositoryId: repository.id,
+              },
+            },
+            include: {
+              commit: true,
+            },
+            orderBy: {
+              commit: {
+                timestamp: 'desc',
+              },
+            },
+          });
+
+          // Determine the correct action based on file existence and content changes
+          let action = file.action || "added";
+          
+          if (existingFile) {
+            if (file.content !== existingFile.content) {
+              action = "modified";
+            } else if (file.action === "deleted") {
+              action = "deleted";
+            } else {
+              // File exists and content is the same, skip creating duplicate
+              continue;
+            }
+          } else {
+            action = "added";
+          }
+
+          // Create the commit file record
+          await prisma.commitFile.create({
+            data: {
+              commitId: commit.id,
+              path: file.path,
+              content: file.content,
+              hash: file.hash,
+              mode: file.mode || "100644",
+              action: action,
+            },
+          });
+        }
       }
 
       createdCommits.push(commit);

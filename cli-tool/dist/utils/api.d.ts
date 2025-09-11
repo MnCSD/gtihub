@@ -2,6 +2,7 @@ import { ApiResponse, Repository, Commit, FileEntry, Branch } from '../types';
 declare class ApiClient {
     private client;
     constructor();
+    private getClientForRemote;
     getRepository(owner: string, repo: string): Promise<ApiResponse<Repository>>;
     createRepository(data: Partial<Repository>): Promise<ApiResponse<Repository>>;
     cloneRepository(owner: string, repo: string): Promise<ApiResponse<{
@@ -24,6 +25,7 @@ declare class ApiClient {
     }>>;
     getFiles(owner: string, repo: string, branch?: string): Promise<ApiResponse<FileEntry[]>>;
     getBranches(owner: string, repo: string): Promise<ApiResponse<Branch[]>>;
+    getCommits(owner: string, repo: string, remoteUrl?: string): Promise<ApiResponse<Commit[]>>;
 }
 export declare const apiClient: ApiClient;
 export {};

@@ -9,12 +9,27 @@ export interface Repository {
 }
 export interface Commit {
     hash: string;
+    sha: string;
     message: string;
     author: string;
+    authorName: string;
+    authorEmail: string;
     committer: string;
+    committerName: string;
+    committerEmail: string;
     timestamp: Date;
     repositoryId: string;
     parentCommits?: string[];
+    files?: CommitFile[];
+}
+export interface CommitFile {
+    id: string;
+    commitId: string;
+    path: string;
+    content: string;
+    hash: string;
+    mode: string;
+    action: string;
 }
 export interface FileEntry {
     path: string;

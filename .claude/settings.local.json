@@ -97,7 +97,12 @@
       "Bash(gith add README.md app.js)",
       "Bash(gith commit -m \"Initial commit by MnCSD with README and app.js\")",
       "Bash(gith remote add origin \"http://localhost:3000/MnCSD/test-repo\")",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(npx next build:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(gith add README.md)",
+      "Bash(gith commit -m \"Update README.md content\")",
+      "Read(//c/Users/MariosNikolopoulos/Documents/builds/**)"
     ],
     "deny": [],
     "ask": []
