@@ -1,25 +1,27 @@
-import { Card, Button } from '@/components/ui';
-import RepoCard from '@/components/repo-card';
+import { Card, Button } from "@/components/ui";
+import RepoCard from "@/components/repo-card";
 
 // Mock data - in real app this would come from props/API
 const trendingRepos = [
   {
-    name: 'agentscope-ai/agentscope',
-    description: 'AgentScope: Agent-Oriented Programming for Building LLM Applications',
-    language: 'Python',
-    stars: '8.9k',
+    name: "agentscope-ai/agentscope",
+    description:
+      "AgentScope: Agent-Oriented Programming for Building LLM Applications",
+    language: "Python",
+    stars: "8.9k",
   },
   {
-    name: 'LuckyOne7777/ChatGPT-Micro-Cap-Experiment',
-    description: 'This repo powers my blog experiment where ChatGPT manages a real-money micro-cap stock portfolio.',
-    language: 'Python', 
-    stars: '5.1k',
+    name: "LuckyOne7777/ChatGPT-Micro-Cap-Experiment",
+    description:
+      "This repo powers my blog experiment where ChatGPT manages a real-money micro-cap stock portfolio.",
+    language: "Python",
+    stars: "5.1k",
   },
 ];
 
 const TrendingRepos = () => {
   return (
-    <Card variant="dark" padding="none">
+    <Card className="border-white/10">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="text-sm text-white/60">
           <div className="inline-flex items-center gap-2">
@@ -40,13 +42,15 @@ const TrendingRepos = () => {
           See more
         </button>
       </div>
-      
+
       <ul className="p-3 pt-0 px-0 space-y-3">
         {trendingRepos.map((repo, index) => (
           <li
             key={repo.name}
             className={`rounded ${
-              index === trendingRepos.length - 1 ? '' : 'border-b border-white/10'
+              index === trendingRepos.length - 1
+                ? ""
+                : "border-b border-white/10"
             } p-3`}
           >
             <div className="mt-2">

@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Button, Input } from '@/components/ui';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui';
 import { GoogleIcon } from '@/components/icons';
 import { LoginFormData } from '@/types';
 
@@ -95,8 +97,10 @@ const LoginForm = ({ onSuccess, onError }: LoginFormProps) => {
 
       <Button
         type="submit"
+        variant="github"
+        size="lg"
         loading={loading}
-        className="w-full"
+        className="w-full text-sm font-medium"
         disabled={!formData.email || !formData.password}
       >
         {loading ? 'Signing in...' : 'Sign in'}
@@ -116,8 +120,9 @@ const LoginForm = ({ onSuccess, onError }: LoginFormProps) => {
       {/* Google Sign In */}
       <Button
         type="button"
-        variant="secondary"
-        className="w-full flex items-center justify-center gap-2"
+        variant="github-secondary"
+        size="lg"
+        className="w-full flex items-center justify-center gap-2 text-sm font-medium"
         onClick={handleGoogleSignIn}
       >
         <GoogleIcon /> Continue with Google
@@ -126,9 +131,9 @@ const LoginForm = ({ onSuccess, onError }: LoginFormProps) => {
       {/* Create account link */}
       <p className="text-center text-sm text-[#8b949e]">
         New to GitHub?{' '}
-        <a href="/signup" className="text-[#58a6ff] hover:underline">
+        <Link href="/signup" className="text-[#58a6ff] hover:underline">
           Create an account
-        </a>
+        </Link>
       </p>
 
       <p className="text-center text-sm">

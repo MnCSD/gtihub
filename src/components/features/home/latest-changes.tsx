@@ -1,18 +1,16 @@
-import { Card } from '@/components/ui';
+import { Card } from "@/components/ui";
 
 // Mock data - in real app this would come from props/API
 const latestChanges = [
-  'Improved file navigation and editing in the web UI',
-  'Manage Copilot and users via Enterprise Teams in public preview',
-  'Remote GitHub MCP Server is now generally available',
+  "Improved file navigation and editing in the web UI",
+  "Manage Copilot and users via Enterprise Teams in public preview",
+  "Remote GitHub MCP Server is now generally available",
 ];
 
 const LatestChanges = () => {
   return (
-    <Card variant="dark" className="bg-[#010409]">
-      <h3 className="text-sm font-semibold text-white/90">
-        Latest changes
-      </h3>
+    <Card className="border-white/10 p-3">
+      <h3 className="text-sm font-semibold text-white/90">Latest changes</h3>
       <div className="relative pl-4">
         <div
           className="absolute left-[9px] top-2 bottom-1 w-px bg-white/20"

@@ -1,7 +1,11 @@
 // UI Components Export File
-export { default as Button } from './button';
+
+// shadcn/ui components (named exports)
+export * from './button';
+export * from './card';
+
+// Custom components (default exports)
 export { default as Input } from './input';
-export { default as Card } from './card';
 export { default as LoadingSpinner } from './loading-spinner';
 export { default as ErrorBoundary } from './error-boundary';
 export { default as Logo } from './logo';

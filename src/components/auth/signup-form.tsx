@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import Link from 'next/link';
-import { Button, Input } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui';
 import { GoogleIcon } from '@/components/icons';
 import { SignupFormData } from '@/types';
 
@@ -77,7 +77,8 @@ const SignupForm = ({ onSuccess, onError }: SignupFormProps) => {
 
       {/* Google OAuth button */}
       <Button
-        variant="secondary"
+        variant="outline"
+        size="lg"
         className="w-full bg-white border border-black/10 shadow-sm flex items-center justify-center gap-2 text-sm font-medium text-black hover:bg-gray-50"
         onClick={handleGoogleSignIn}
       >
@@ -157,8 +158,10 @@ const SignupForm = ({ onSuccess, onError }: SignupFormProps) => {
 
         <Button
           type="submit"
+          variant="github"
+          size="lg"
           loading={loading}
-          className="mt-2 w-full bg-black text-white hover:bg-black/90"
+          className="mt-2 w-full text-sm font-medium"
           disabled={!formData.email || !formData.password}
         >
           {loading ? 'Creating...' : 'Create account'}

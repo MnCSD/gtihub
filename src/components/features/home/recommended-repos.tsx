@@ -1,19 +1,20 @@
-import { Card, Button } from '@/components/ui';
-import RepoCard from '@/components/repo-card';
+import { Card, Button } from "@/components/ui";
+import RepoCard from "@/components/repo-card";
 
 // Mock data - in real app this would come from props/API
 const recommendedRepos = [
   {
-    name: 'yangshun/front-end-interview-handbook',
-    description: 'Front End interview preparation materials for busy engineers (updated for 2025)',
-    language: 'MDX',
-    stars: '43.5k',
+    name: "yangshun/front-end-interview-handbook",
+    description:
+      "Front End interview preparation materials for busy engineers (updated for 2025)",
+    language: "MDX",
+    stars: "43.5k",
   },
 ];
 
 const RecommendedRepos = () => {
   return (
-    <Card variant="dark" padding="none">
+    <Card className="border-white/10">
       <div className="flex items-center justify-between px-3 py-3">
         <div className="text-sm text-white/60">
           <div className="inline-flex items-center gap-2">
