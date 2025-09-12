@@ -103,7 +103,8 @@
       "Bash(gith add README.md)",
       "Bash(gith commit -m \"Update README.md content\")",
       "Read(//c/Users/MariosNikolopoulos/Documents/builds/**)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
