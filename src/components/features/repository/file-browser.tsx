@@ -1,6 +1,7 @@
 import { ChevronDownIcon, CodeIcon, TagIcon } from "lucide-react";
 import CommitInfoBar from "./commit-info-bar";
 import FileList from "./file-list";
+import AddFilePopover from "./add-file-popover";
 import { CommitInfo, FileItem, User } from "./types";
 
 interface FileBrowserProps {
@@ -13,14 +14,14 @@ interface FileBrowserProps {
   currentBranch?: string;
 }
 
-export default function FileBrowser({ 
-  user, 
-  username, 
-  commit, 
-  files, 
+export default function FileBrowser({
+  user,
+  username,
+  commit,
+  files,
   branchesCount,
   commitsCount,
-  currentBranch = "main"
+  currentBranch = "main",
 }: FileBrowserProps) {
   return (
     <div>
@@ -47,7 +48,7 @@ export default function FileBrowser({
               <ChevronDownIcon size={14} />
             </span>
           </button>
-          
+
           <div className="flex items-center gap-4 text-sm text-white/70">
             <div className="flex items-center gap-1">
               <svg
@@ -77,18 +78,20 @@ export default function FileBrowser({
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <input
             placeholder="Go to file"
             className="h-8 w-64 rounded-md bg-transparent border border-white/30 px-3 text-sm placeholder:text-white/50 focus:outline-none focus:border-[#58a6ff]"
           />
-          <button className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/20 rounded-md bg-white/10">
-            <span>Add file</span>
-            <span className="text-xs">
-              <ChevronDownIcon size={14} />
-            </span>
-          </button>
+          <AddFilePopover>
+            <button className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/20 rounded-md bg-white/10 hover:bg-white/15 transition-colors cursor-pointer">
+              <span>Add file</span>
+              <span className="text-xs">
+                <ChevronDownIcon size={14} />
+              </span>
+            </button>
+          </AddFilePopover>
           <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-[#238636] hover:bg-[#2ea043] rounded-md">
             <span>
               <CodeIcon size={16} color="white" />
@@ -103,9 +106,9 @@ export default function FileBrowser({
 
       {/* Commit info bar and file list */}
       <div className="border border-white/20 rounded-md overflow-hidden">
-        <CommitInfoBar 
-          user={user} 
-          commit={commit} 
+        <CommitInfoBar
+          user={user}
+          commit={commit}
           username={username}
           commitsCount={commitsCount}
         />

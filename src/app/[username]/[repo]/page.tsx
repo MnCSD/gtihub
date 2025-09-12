@@ -1,17 +1,13 @@
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import Navbar from "@/components/dashboard/navbar";
-import { CodeIcon } from "lucide-react";
 import { Metadata } from "next";
 import {
-  NavigationTabs,
   RepositoryHeader,
   FileBrowser,
   ReadmeSection,
   RepositorySidebar,
   FileItem,
-  NavigationTab,
 } from "@/components/features/repository";
 
 type PageParams = {
@@ -45,12 +41,6 @@ function formatRelative(date: Date) {
 }
 
 
-// Navigation tabs configuration
-const navigationTabs: NavigationTab[] = [
-  { label: "Code", icon: <CodeIcon size={16} />, active: true },
-  { label: "Issues", icon: "⚠", count: null },
-];
-
 export default async function RepositoryPage({ params }: PageParams) {
   const { username, repo } = await params;
 
@@ -59,13 +49,6 @@ export default async function RepositoryPage({ params }: PageParams) {
     name: session?.user?.name ?? null,
     email: session?.user?.email ?? null,
     image: session?.user?.image ?? null,
-  };
-
-  // Create repository display info for navbar
-  const repoDisplayInfo = {
-    username,
-    repo,
-    displayText: `${username}/${repo}`,
   };
 
   // Try to locate the repository for the specified username
@@ -101,21 +84,24 @@ export default async function RepositoryPage({ params }: PageParams) {
     lastCommitDate?: Date;
   }> = [];
   let readmeContent = "";
-  let currentFiles = new Map<string, {
-    path: string;
-    content: string;
-    action: string;
-    lastCommitMessage: string;
-    lastCommitDate: Date;
-  }>();
+  let currentFiles = new Map<
+    string,
+    {
+      path: string;
+      content: string;
+      action: string;
+      lastCommitMessage: string;
+      lastCommitDate: Date;
+    }
+  >();
 
   // Find the repository owner by username (could be name or part of email)
   const repoOwner = await prisma.user.findFirst({
-    where: { 
+    where: {
       OR: [
-        { name: { equals: username, mode: 'insensitive' } },
-        { email: { contains: username, mode: 'insensitive' } }
-      ]
+        { name: { equals: username, mode: "insensitive" } },
+        { email: { contains: username, mode: "insensitive" } },
+      ],
     },
   });
 
@@ -125,12 +111,12 @@ export default async function RepositoryPage({ params }: PageParams) {
         where: { ownerId: repoOwner.id, name: repo },
         include: {
           branches: true,
-          commits: { 
-            orderBy: { timestamp: "desc" }, 
+          commits: {
+            orderBy: { timestamp: "desc" },
             take: 1,
             include: {
-              files: true
-            }
+              files: true,
+            },
           },
         },
       }),
@@ -138,17 +124,17 @@ export default async function RepositoryPage({ params }: PageParams) {
         where: {
           repository: {
             ownerId: repoOwner.id,
-            name: repo
-          }
-        }
-      })
+            name: repo,
+          },
+        },
+      }),
     ]);
-    
+
     if (repoData) {
       dbRepo = repoData;
       branchesCount = repoData.branches.length;
       commitsCount = totalCommits;
-      
+
       if (repoData.commits[0]) {
         latestCommit = {
           message: repoData.commits[0].message,
@@ -158,13 +144,15 @@ export default async function RepositoryPage({ params }: PageParams) {
         };
 
         // Get the latest version of each file using a more robust approach
-        const allCommitFiles = await prisma.$queryRaw<Array<{
-          path: string;
-          content: string;
-          action: string;
-          message: string;
-          timestamp: Date;
-        }>>`
+        const allCommitFiles = await prisma.$queryRaw<
+          Array<{
+            path: string;
+            content: string;
+            action: string;
+            message: string;
+            timestamp: Date;
+          }>
+        >`
           SELECT DISTINCT ON (cf.path) 
             cf.path,
             cf.content,
@@ -181,7 +169,7 @@ export default async function RepositoryPage({ params }: PageParams) {
         currentFiles.clear(); // Clear any existing data
 
         // Process files - each is already the latest version due to DISTINCT ON query
-        allCommitFiles.forEach(file => {
+        allCommitFiles.forEach((file) => {
           currentFiles.set(file.path, {
             path: file.path,
             content: file.content,
@@ -190,30 +178,23 @@ export default async function RepositoryPage({ params }: PageParams) {
             lastCommitDate: file.timestamp,
           });
         });
-        
-        // Debug: Log current files for analysis
-        console.log('Current files for language analysis:', 
-          Array.from(currentFiles.values()).map(f => ({ 
-            path: f.path, 
-            action: f.action,
-            contentLength: f.content?.length || 0,
-            lines: f.content?.split('\n').length || 0
-          }))
-        );
-        
-        // Process files to create directory structure for root level display
-        const fileMap = new Map<string, {
-          name: string;
-          type: "file" | "dir";
-          path: string;
-          lastCommitMessage?: string;
-          lastCommitDate?: Date;
-        }>();
 
-        currentFiles.forEach(file => {
+        // Process files to create directory structure for root level display
+        const fileMap = new Map<
+          string,
+          {
+            name: string;
+            type: "file" | "dir";
+            path: string;
+            lastCommitMessage?: string;
+            lastCommitDate?: Date;
+          }
+        >();
+
+        currentFiles.forEach((file) => {
           if (file.action !== "deleted") {
-            const pathParts = file.path.split('/');
-            
+            const pathParts = file.path.split("/");
+
             if (pathParts.length === 1) {
               // Root level file
               fileMap.set(file.path, {
@@ -240,17 +221,17 @@ export default async function RepositoryPage({ params }: PageParams) {
         });
 
         // Convert to array and sort (directories first, then files)
-        repoFiles = Array.from(fileMap.values())
-          .sort((a, b) => {
-            if (a.type === b.type) {
-              return a.name.localeCompare(b.name);
-            }
-            return a.type === "dir" ? -1 : 1;
-          });
+        repoFiles = Array.from(fileMap.values()).sort((a, b) => {
+          if (a.type === b.type) {
+            return a.name.localeCompare(b.name);
+          }
+          return a.type === "dir" ? -1 : 1;
+        });
 
         // Find README content from current files
-        const readmeFile = Array.from(currentFiles.values()).find(file => 
-          file.path.toLowerCase() === 'readme.md' && file.action !== "deleted"
+        const readmeFile = Array.from(currentFiles.values()).find(
+          (file) =>
+            file.path.toLowerCase() === "readme.md" && file.action !== "deleted"
         );
         if (readmeFile) {
           readmeContent = readmeFile.content;
@@ -281,14 +262,8 @@ Feel free to contribute to this project by submitting pull requests.`;
     branchesCount,
   };
 
-
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
-      <Navbar user={navUser} repositoryInfo={repoDisplayInfo} />
-
-      {/* Navigation tabs */}
-      <NavigationTabs tabs={navigationTabs} />
-
+    <>
       {/* Repository header */}
       <RepositoryHeader repository={repositoryInfo} user={navUser} />
 
@@ -296,35 +271,37 @@ Feel free to contribute to this project by submitting pull requests.`;
       <div className="max-w-[1260px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
         {/* Left: file browser and README */}
         <div>
-          <FileBrowser 
+          <FileBrowser
             user={navUser}
             username={username}
             commit={latestCommit}
-            files={repoFiles.map(file => ({
+            files={repoFiles.map((file) => ({
               name: file.name,
               type: file.type,
               commit: file.lastCommitMessage || "Initial commit",
-              updated: file.lastCommitDate ? formatRelative(file.lastCommitDate) : "unknown"
+              updated: file.lastCommitDate
+                ? formatRelative(file.lastCommitDate)
+                : "unknown",
             }))}
             branchesCount={branchesCount}
             commitsCount={commitsCount}
           />
-          
+
           <ReadmeSection content={readmeContent} />
         </div>
 
         {/* Right sidebar */}
-        <RepositorySidebar 
+        <RepositorySidebar
           description={repositoryInfo.description}
           repositoryFiles={Array.from(currentFiles?.values() || [])
-            .filter(file => file.action !== 'deleted')
-            .map(file => ({
+            .filter((file) => file.action !== "deleted")
+            .map((file) => ({
               path: file.path,
               content: file.content,
-              action: file.action
+              action: file.action,
             }))}
         />
       </div>
-    </div>
+    </>
   );
 }
