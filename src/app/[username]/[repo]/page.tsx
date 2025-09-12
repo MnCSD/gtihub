@@ -101,6 +101,13 @@ export default async function RepositoryPage({ params }: PageParams) {
     lastCommitDate?: Date;
   }> = [];
   let readmeContent = "";
+  let currentFiles = new Map<string, {
+    path: string;
+    content: string;
+    action: string;
+    lastCommitMessage: string;
+    lastCommitDate: Date;
+  }>();
 
   // Find the repository owner by username (could be name or part of email)
   const repoOwner = await prisma.user.findFirst({
@@ -150,45 +157,49 @@ export default async function RepositoryPage({ params }: PageParams) {
           sha: repoData.commits[0].sha,
         };
 
-        // Get all files from all commits to build current repository state
-        const allCommitFiles = await prisma.commitFile.findMany({
-          where: {
-            commit: {
-              repositoryId: repoData.id,
-            },
-          },
-          include: {
-            commit: true,
-          },
-          orderBy: {
-            commit: {
-              timestamp: 'desc',
-            },
-          },
-        });
-
-        // Build current repository state (latest version of each file)
-        const currentFiles = new Map<string, {
+        // Get the latest version of each file using a more robust approach
+        const allCommitFiles = await prisma.$queryRaw<Array<{
           path: string;
           content: string;
           action: string;
-          lastCommitMessage: string;
-          lastCommitDate: Date;
-        }>();
+          message: string;
+          timestamp: Date;
+        }>>`
+          SELECT DISTINCT ON (cf.path) 
+            cf.path,
+            cf.content,
+            cf.action,
+            c.message,
+            c.timestamp
+          FROM "CommitFile" cf
+          INNER JOIN "Commit" c ON c.id = cf."commitId"
+          WHERE c."repositoryId" = ${repoData.id}
+          ORDER BY cf.path, c.timestamp DESC
+        `;
 
-        // Process files in reverse chronological order (newest first)
+        // Build current repository state (latest version of each file)
+        currentFiles.clear(); // Clear any existing data
+
+        // Process files - each is already the latest version due to DISTINCT ON query
         allCommitFiles.forEach(file => {
-          if (!currentFiles.has(file.path)) {
-            // Only add if we haven't seen this file path yet (keeps the latest version)
-            currentFiles.set(file.path, {
-              path: file.path,
-              content: file.content,
-              action: file.action,
-              lastCommitMessage: file.commit.message,
-              lastCommitDate: file.commit.timestamp,
-            });
-          }
+          currentFiles.set(file.path, {
+            path: file.path,
+            content: file.content,
+            action: file.action,
+            lastCommitMessage: file.message,
+            lastCommitDate: file.timestamp,
+          });
         });
+        
+        // Debug: Log current files for analysis
+        console.log('Current files for language analysis:', 
+          Array.from(currentFiles.values()).map(f => ({ 
+            path: f.path, 
+            action: f.action,
+            contentLength: f.content?.length || 0,
+            lines: f.content?.split('\n').length || 0
+          }))
+        );
         
         // Process files to create directory structure for root level display
         const fileMap = new Map<string, {
@@ -303,7 +314,16 @@ Feel free to contribute to this project by submitting pull requests.`;
         </div>
 
         {/* Right sidebar */}
-        <RepositorySidebar description={repositoryInfo.description} />
+        <RepositorySidebar 
+          description={repositoryInfo.description}
+          repositoryFiles={Array.from(currentFiles?.values() || [])
+            .filter(file => file.action !== 'deleted')
+            .map(file => ({
+              path: file.path,
+              content: file.content,
+              action: file.action
+            }))}
+        />
       </div>
     </div>
   );

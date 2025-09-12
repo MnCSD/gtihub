@@ -1,6 +1,15 @@
+"use client";
+
 import { Settings, StarIcon } from "lucide-react";
 import Link from "next/link";
 import { LanguageStats, RepositoryStats } from "./types";
+import { useEffect, useState } from "react";
+
+interface RepositoryFile {
+  path: string;
+  content: string;
+  action: string;
+}
 
 interface RepositorySidebarProps {
   description?: string | null;
@@ -8,6 +17,7 @@ interface RepositorySidebarProps {
   languages?: LanguageStats[];
   hasReleases?: boolean;
   hasPackages?: boolean;
+  repositoryFiles?: RepositoryFile[];
 }
 
 const defaultStats: RepositoryStats = {
@@ -22,13 +32,57 @@ const defaultLanguages: LanguageStats[] = [
   { name: "Other", percentage: 0.6, color: "#f1e05a" },
 ];
 
-export default function RepositorySidebar({ 
-  description, 
+export default function RepositorySidebar({
+  description,
   stats = defaultStats,
   languages = defaultLanguages,
   hasReleases = false,
-  hasPackages = false
+  hasPackages = false,
+  repositoryFiles = [],
 }: RepositorySidebarProps) {
+  const [dynamicLanguages, setDynamicLanguages] =
+    useState<LanguageStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadLanguageStats() {
+      if (!repositoryFiles || repositoryFiles.length === 0) {
+        setDynamicLanguages([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/languages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ repositoryFiles }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.languages && data.languages.length > 0) {
+            setDynamicLanguages(data.languages);
+          } else {
+            setDynamicLanguages([]);
+          }
+        } else {
+          console.warn("Failed to fetch language stats:", response.statusText);
+          setDynamicLanguages([]);
+        }
+      } catch (error) {
+        console.warn("Failed to calculate language stats:", error);
+        setDynamicLanguages([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadLanguageStats();
+  }, [repositoryFiles, languages]);
   return (
     <aside className="space-y-4">
       {/* About */}
@@ -96,7 +150,7 @@ export default function RepositorySidebar({
               {stats.stars} stars
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <span>
               <svg
@@ -116,7 +170,7 @@ export default function RepositorySidebar({
               {stats.watchers} watching
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <span>
               <svg
@@ -144,9 +198,7 @@ export default function RepositorySidebar({
           <h3 className="font-semibold text-[15px]">Releases</h3>
         </div>
         {hasReleases ? (
-          <div>
-            {/* Add actual releases content here when needed */}
-          </div>
+          <div>{/* Add actual releases content here when needed */}</div>
         ) : (
           <>
             <p className="text-sm text-white/60 mb-2">No releases published</p>
@@ -163,9 +215,7 @@ export default function RepositorySidebar({
           <h3 className="font-semibold">Packages</h3>
         </div>
         {hasPackages ? (
-          <div>
-            {/* Add actual packages content here when needed */}
-          </div>
+          <div>{/* Add actual packages content here when needed */}</div>
         ) : (
           <>
             <p className="text-sm text-white/60 mb-2">No packages published</p>
@@ -179,33 +229,45 @@ export default function RepositorySidebar({
       {/* Languages */}
       <div>
         <h3 className="font-semibold mb-3">Languages</h3>
-        <div className="space-y-2">
-          <div className="h-2 w-full rounded overflow-hidden bg-white/10">
-            <div className="h-full flex">
-              {languages.map((lang, index) => (
+        {isLoading ? (
+          <div className="text-sm text-white/60">Analyzing languages...</div>
+        ) : dynamicLanguages.length > 0 ? (
+          <div className="space-y-2">
+            <div className="h-2 w-full rounded overflow-hidden bg-white/10">
+              <div className="h-full flex">
+                {dynamicLanguages.map((lang, index) => (
+                  <div
+                    key={`${lang.name}-${index}`}
+                    className="h-full"
+                    style={{
+                      backgroundColor: lang.color,
+                      width: `${lang.percentage}%`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-white/60 flex-wrap">
+              {dynamicLanguages.map((lang, index) => (
                 <div
-                  key={`${lang.name}-${index}`}
-                  className="h-full"
-                  style={{ 
-                    backgroundColor: lang.color,
-                    width: `${lang.percentage}%` 
-                  }}
-                />
+                  key={`${lang.name}-label-${index}`}
+                  className="flex items-center gap-1"
+                >
+                  <div
+                    className="w-2 h-2 rounded-full mr-1"
+                    style={{ backgroundColor: lang.color }}
+                  />
+                  <span>
+                    <span className="text-white">{lang.name} </span>
+                    {lang.percentage}%
+                  </span>
+                </div>
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-white/60 flex-wrap">
-            {languages.map((lang, index) => (
-              <div key={`${lang.name}-label-${index}`} className="flex items-center gap-1">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: lang.color }}
-                />
-                <span>{lang.name} {lang.percentage}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        ) : (
+          <div className="text-sm text-white/60">No languages detected</div>
+        )}
       </div>
     </aside>
   );

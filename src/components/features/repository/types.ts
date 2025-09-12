@@ -37,6 +37,8 @@ export interface LanguageStats {
   name: string;
   percentage: number;
   color: string;
+  fileCount?: number;
+  totalLines?: number;
 }
 
 export interface RepositoryStats {
