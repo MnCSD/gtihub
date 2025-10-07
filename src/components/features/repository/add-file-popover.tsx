@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { PlusIcon, UploadIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface AddFilePopoverProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface AddFilePopoverProps {
 
 export default function AddFilePopover({ children }: AddFilePopoverProps) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const handleCreateNewFile = () => {
     // TODO: Implement create new file functionality
@@ -22,8 +24,11 @@ export default function AddFilePopover({ children }: AddFilePopoverProps) {
   };
 
   const handleUploadFiles = () => {
-    // TODO: Implement upload files functionality
-    console.log("Upload files");
+    //push to /${username}/${repo}/upload
+    const pathParts = window.location.pathname.split("/");
+    const username = pathParts[1];
+    const repo = pathParts[2];
+    router.push(`/${username}/${repo}/upload`);
     setOpen(false);
   };
 
